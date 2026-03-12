@@ -35,6 +35,10 @@ SAFETY RULES:
 4. Physician note records what was SAID, not what IS clinically
 5. Family summary validates emotions before providing information
 
+FAMILY PRESENCE RULES:
+6. If family_present is true in the metadata: Write a BRIEF family summary (100-120 words). The family heard the conversation live — this is a take-home reminder. Open with "As we discussed today..."
+7. If family_present is false in the metadata: Write a DETAILED family summary (200-250 words). The family was NOT present — this is their primary way of understanding what happened. Open with phrasing like "Your loved one's care team met to discuss..."
+
 You MUST respond with valid JSON matching this exact schema:
 {
   "physician_note": {
