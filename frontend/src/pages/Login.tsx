@@ -11,7 +11,7 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  if (user) return <Navigate to="/new-conversation" replace />
+  if (user) return <Navigate to="/dashboard" replace />
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -19,7 +19,7 @@ export default function Login() {
     setLoading(true)
     try {
       await login(email, password)
-      navigate('/new-conversation')
+      navigate('/dashboard')
     } catch {
       setError('Invalid email or password')
     } finally {
@@ -32,7 +32,7 @@ export default function Login() {
     setLoading(true)
     try {
       await demoLogin()
-      navigate('/new-conversation')
+      navigate('/dashboard')
     } catch {
       setError('Demo mode unavailable')
     } finally {
