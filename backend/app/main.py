@@ -20,7 +20,6 @@ from app.conversations.models import (
 from app.conversations.router import router as conversations_router
 from app.core.database import Base, engine, AsyncSessionLocal
 from app.core.security import hash_password
-from app.portfolio.api import router as portfolio_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -150,7 +149,7 @@ app.add_middleware(
 
 app.include_router(auth_router, prefix="/api")
 app.include_router(conversations_router, prefix="/api")
-app.include_router(portfolio_router, prefix="/api")
+
 
 
 # Static files and SPA serving
