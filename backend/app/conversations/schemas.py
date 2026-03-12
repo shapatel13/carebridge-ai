@@ -8,6 +8,7 @@ class ConversationCreate(BaseModel):
     participants: list[str] | None = None
     organ_supports: list[str] | None = None
     code_status_discussed: bool = False
+    family_present: bool = False
     code_status_change: str | None = None
     surrogate_name: str | None = None
     surrogate_relationship: str | None = None
@@ -22,6 +23,7 @@ class ConversationUpdate(BaseModel):
     participants: list[str] | None = None
     organ_supports: list[str] | None = None
     code_status_discussed: bool | None = None
+    family_present: bool | None = None
     code_status_change: str | None = None
     surrogate_name: str | None = None
     surrogate_relationship: str | None = None
@@ -49,6 +51,7 @@ class ConversationResponse(BaseModel):
     participants: list[str] | None = None
     organ_supports: list[str] | None = None
     code_status_discussed: bool
+    family_present: bool
     code_status_change: str | None = None
     surrogate_name: str | None = None
     surrogate_relationship: str | None = None
