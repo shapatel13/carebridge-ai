@@ -129,8 +129,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="AI Investment Portfolio Analysis System",
-    description="Professional-grade portfolio analytics with hedge fund-level technical and fundamental analysis",
+    title="CareBridge AI",
+    description="ICU Serious Illness Communication Platform - AI-powered physician notes, family summaries, and risk detection",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -171,7 +171,7 @@ if FRONTEND_DIST.exists():
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "service": "portfolio-analyzer"}
+    return {"status": "ok", "service": "carebridge-ai"}
 
 
 # Serve index.html for root path
