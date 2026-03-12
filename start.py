@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 """
-AI Investment Portfolio Analysis System - Startup Script
+CareBridge AI - Startup Script
 
 This script:
-1. Builds the React frontend (npm install + npm run build)
-2. Starts the FastAPI backend server
-3. Serves everything on http://localhost:8000
+1. Installs backend dependencies
+2. Builds the React frontend (npm install + npm run build)
+3. Starts the FastAPI backend server
+4. Serves everything on http://localhost:8000
 
 Usage:
     python start.py
 
 Requirements:
     - Node.js and npm installed
-    - Python 3.11+ with dependencies from backend/pyproject.toml installed
+    - Python 3.11+
 """
 
 import os
@@ -72,17 +73,17 @@ def check_nodejs() -> bool:
 
 def main():
     """Main startup function."""
-    print_header("AI Investment Portfolio Analysis System")
+    print_header("CareBridge AI - ICU Communication Platform")
     print("Starting application...\n")
-    
+
     # Get paths
     project_root = Path(__file__).parent.absolute()
     frontend_dir = project_root / "frontend"
     backend_dir = project_root / "backend"
-    
-    total_steps = 4
+
+    total_steps = 5
     current_step = 1
-    
+
     # Step 1: Check prerequisites
     print_step(current_step, total_steps, "Checking prerequisites...")
     if not check_nodejs():
@@ -95,13 +96,19 @@ def main():
     print(f"  Node.js version: {result.stdout.strip()}")
     current_step += 1
     
-    # Step 2: Install frontend dependencies
+    # Step 2: Install backend dependencies
+    print_step(current_step, total_steps, "Installing backend dependencies...")
+    if not run_command([sys.executable, "-m", "pip", "install", "-e", "."], backend_dir, "pip install"):
+        print("\n  WARNING: pip install had issues, trying to continue...")
+    current_step += 1
+
+    # Step 3: Install frontend dependencies
     print_step(current_step, total_steps, "Installing frontend dependencies...")
     if not run_command(["npm", "install"], frontend_dir, "npm install"):
         print("\n  WARNING: npm install had issues, trying to continue...")
     current_step += 1
     
-    # Step 3: Build frontend
+    # Step 4: Build frontend
     print_step(current_step, total_steps, "Building frontend...")
     if not run_command(["npm", "run", "build"], frontend_dir, "npm run build"):
         print("\n  ERROR: Frontend build failed!")
@@ -116,12 +123,13 @@ def main():
     print(f"  Build successful: {dist_dir}")
     current_step += 1
     
-    # Step 4: Start backend server
+    # Step 5: Start backend server
     print_step(current_step, total_steps, "Starting FastAPI server...")
-    print_header("Server Ready!")
-    print("Access the application at: http://localhost:8000")
-    print("API documentation at: http://localhost:8000/docs")
-    print("Press Ctrl+C to stop the server\n")
+    print_header("CareBridge AI is Ready!")
+    print("  App:  http://localhost:8000")
+    print("  API:  http://localhost:8000/docs")
+    print("  Demo: Click 'Try Demo Mode' on the login page")
+    print("\n  Press Ctrl+C to stop the server\n")
     
     # Give user a moment to see the message
     time.sleep(1)
