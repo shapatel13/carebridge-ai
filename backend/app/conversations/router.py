@@ -29,6 +29,31 @@ from app.core.database import get_db
 router = APIRouter(prefix="/conversations", tags=["conversations"])
 
 
+def _conv_response(c: Conversation) -> ConversationResponse:
+    """Build a ConversationResponse from a Conversation model."""
+    return ConversationResponse(
+        id=c.id,
+        patient_alias=c.patient_alias,
+        physician_id=c.physician_id,
+        hospital_id=c.hospital_id,
+        status=c.status.value,
+        tone_setting=c.tone_setting.value if hasattr(c.tone_setting, 'value') else c.tone_setting,
+        risk_calibration=c.risk_calibration,
+        participants=c.participants,
+        organ_supports=c.organ_supports,
+        code_status_discussed=c.code_status_discussed,
+        family_present=c.family_present,
+        language=c.language,
+        code_status_change=c.code_status_change,
+        surrogate_name=c.surrogate_name,
+        surrogate_relationship=c.surrogate_relationship,
+        family_questions=c.family_questions,
+        clinician_annotations=c.clinician_annotations,
+        created_at=str(c.created_at),
+        finalized_at=str(c.finalized_at) if c.finalized_at else None,
+    )
+
+
 @router.post("", response_model=ConversationResponse, status_code=status.HTTP_201_CREATED)
 async def create_conversation(
     body: ConversationCreate,
@@ -45,6 +70,7 @@ async def create_conversation(
         organ_supports=body.organ_supports,
         code_status_discussed=body.code_status_discussed,
         family_present=body.family_present,
+        language=body.language,
         code_status_change=body.code_status_change,
         surrogate_name=body.surrogate_name,
         surrogate_relationship=body.surrogate_relationship,
@@ -55,26 +81,7 @@ async def create_conversation(
     db.add(conversation)
     await db.flush()
 
-    return ConversationResponse(
-        id=conversation.id,
-        patient_alias=conversation.patient_alias,
-        physician_id=conversation.physician_id,
-        hospital_id=conversation.hospital_id,
-        status=conversation.status.value,
-        tone_setting=conversation.tone_setting.value if hasattr(conversation.tone_setting, 'value') else conversation.tone_setting,
-        risk_calibration=conversation.risk_calibration,
-        participants=conversation.participants,
-        organ_supports=conversation.organ_supports,
-        code_status_discussed=conversation.code_status_discussed,
-        family_present=conversation.family_present,
-        code_status_change=conversation.code_status_change,
-        surrogate_name=conversation.surrogate_name,
-        surrogate_relationship=conversation.surrogate_relationship,
-        family_questions=conversation.family_questions,
-        clinician_annotations=conversation.clinician_annotations,
-        created_at=str(conversation.created_at),
-        finalized_at=None,
-    )
+    return _conv_response(conversation)
 
 
 @router.get("", response_model=list[ConversationResponse])
@@ -88,29 +95,7 @@ async def list_conversations(
         .order_by(Conversation.created_at.desc())
     )
     conversations = result.scalars().all()
-    return [
-        ConversationResponse(
-            id=c.id,
-            patient_alias=c.patient_alias,
-            physician_id=c.physician_id,
-            hospital_id=c.hospital_id,
-            status=c.status.value,
-            tone_setting=c.tone_setting.value if hasattr(c.tone_setting, 'value') else c.tone_setting,
-            risk_calibration=c.risk_calibration,
-            participants=c.participants,
-            organ_supports=c.organ_supports,
-            code_status_discussed=c.code_status_discussed,
-            family_present=c.family_present,
-            code_status_change=c.code_status_change,
-            surrogate_name=c.surrogate_name,
-            surrogate_relationship=c.surrogate_relationship,
-            family_questions=c.family_questions,
-            clinician_annotations=c.clinician_annotations,
-            created_at=str(c.created_at),
-            finalized_at=str(c.finalized_at) if c.finalized_at else None,
-        )
-        for c in conversations
-    ]
+    return [_conv_response(c) for c in conversations]
 
 
 @router.get("/{conversation_id}", response_model=ConversationDetailResponse)
@@ -131,26 +116,7 @@ async def get_conversation(
         raise HTTPException(status_code=403, detail="Access denied")
 
     return ConversationDetailResponse(
-        conversation=ConversationResponse(
-            id=conversation.id,
-            patient_alias=conversation.patient_alias,
-            physician_id=conversation.physician_id,
-            hospital_id=conversation.hospital_id,
-            status=conversation.status.value,
-            tone_setting=conversation.tone_setting.value if hasattr(conversation.tone_setting, 'value') else conversation.tone_setting,
-            risk_calibration=conversation.risk_calibration,
-            participants=conversation.participants,
-            organ_supports=conversation.organ_supports,
-            code_status_discussed=conversation.code_status_discussed,
-            family_present=conversation.family_present,
-            code_status_change=conversation.code_status_change,
-            surrogate_name=conversation.surrogate_name,
-            surrogate_relationship=conversation.surrogate_relationship,
-            family_questions=conversation.family_questions,
-            clinician_annotations=conversation.clinician_annotations,
-            created_at=str(conversation.created_at),
-            finalized_at=str(conversation.finalized_at) if conversation.finalized_at else None,
-        ),
+        conversation=_conv_response(conversation),
         segments=[
             SegmentResponse(
                 id=s.id,
@@ -195,26 +161,7 @@ async def update_conversation(
 
     await db.flush()
 
-    return ConversationResponse(
-        id=conversation.id,
-        patient_alias=conversation.patient_alias,
-        physician_id=conversation.physician_id,
-        hospital_id=conversation.hospital_id,
-        status=conversation.status.value,
-        tone_setting=conversation.tone_setting.value if hasattr(conversation.tone_setting, 'value') else conversation.tone_setting,
-        risk_calibration=conversation.risk_calibration,
-        participants=conversation.participants,
-        organ_supports=conversation.organ_supports,
-        code_status_discussed=conversation.code_status_discussed,
-        family_present=conversation.family_present,
-        code_status_change=conversation.code_status_change,
-        surrogate_name=conversation.surrogate_name,
-        surrogate_relationship=conversation.surrogate_relationship,
-        family_questions=conversation.family_questions,
-        clinician_annotations=conversation.clinician_annotations,
-        created_at=str(conversation.created_at),
-        finalized_at=str(conversation.finalized_at) if conversation.finalized_at else None,
-    )
+    return _conv_response(conversation)
 
 
 @router.post("/{conversation_id}/segments", response_model=SegmentResponse, status_code=201)
@@ -290,6 +237,7 @@ async def generate_output(
         "organ_supports": conversation.organ_supports,
         "code_status_discussed": conversation.code_status_discussed,
         "family_present": conversation.family_present,
+        "language": conversation.language,
         "code_status_change": conversation.code_status_change,
         "surrogate_name": conversation.surrogate_name,
         "surrogate_relationship": conversation.surrogate_relationship,
@@ -356,23 +304,4 @@ async def finalize_conversation(
     conversation.finalized_at = datetime.now(timezone.utc)
     await db.flush()
 
-    return ConversationResponse(
-        id=conversation.id,
-        patient_alias=conversation.patient_alias,
-        physician_id=conversation.physician_id,
-        hospital_id=conversation.hospital_id,
-        status=conversation.status.value,
-        tone_setting=conversation.tone_setting.value if hasattr(conversation.tone_setting, 'value') else conversation.tone_setting,
-        risk_calibration=conversation.risk_calibration,
-        participants=conversation.participants,
-        organ_supports=conversation.organ_supports,
-        code_status_discussed=conversation.code_status_discussed,
-        family_present=conversation.family_present,
-        code_status_change=conversation.code_status_change,
-        surrogate_name=conversation.surrogate_name,
-        surrogate_relationship=conversation.surrogate_relationship,
-        family_questions=conversation.family_questions,
-        clinician_annotations=conversation.clinician_annotations,
-        created_at=str(conversation.created_at),
-        finalized_at=str(conversation.finalized_at),
-    )
+    return _conv_response(conversation)

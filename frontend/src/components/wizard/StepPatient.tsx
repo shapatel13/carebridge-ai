@@ -1,11 +1,22 @@
 import { useState } from 'react'
-import { Users, Plus, X, Heart, HeartOff } from 'lucide-react'
+import { Users, Plus, X, Heart, HeartOff, Globe } from 'lucide-react'
+
+const LANGUAGE_OPTIONS = [
+  { value: 'english', label: 'English', flag: '🇺🇸' },
+  { value: 'spanish', label: 'Español', flag: '🇪🇸' },
+  { value: 'chinese', label: '中文', flag: '🇨🇳' },
+  { value: 'vietnamese', label: 'Tiếng Việt', flag: '🇻🇳' },
+  { value: 'arabic', label: 'العربية', flag: '🇸🇦' },
+  { value: 'korean', label: '한국어', flag: '🇰🇷' },
+]
 
 interface Props {
   patientAlias: string
   setPatientAlias: (v: string) => void
   familyPresent: boolean
   setFamilyPresent: (v: boolean) => void
+  language: string
+  setLanguage: (v: string) => void
   surName: string
   setSurName: (v: string) => void
   surRelation: string
@@ -17,6 +28,7 @@ interface Props {
 export default function StepPatient({
   patientAlias, setPatientAlias,
   familyPresent, setFamilyPresent,
+  language, setLanguage,
   surName, setSurName,
   surRelation, setSurRelation,
   organSupports, setOrganSupports,
@@ -78,6 +90,37 @@ export default function StepPatient({
             </div>
           </button>
         </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+          <Globe className="w-4 h-4 text-clinical" />
+          Family Summary Language
+        </label>
+        <div className="grid grid-cols-3 gap-2">
+          {LANGUAGE_OPTIONS.map((lang) => (
+            <button
+              key={lang.value}
+              type="button"
+              onClick={() => setLanguage(lang.value)}
+              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all text-left ${
+                language === lang.value
+                  ? 'border-clinical bg-clinical/5 shadow-sm'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <span className="text-lg">{lang.flag}</span>
+              <span className={`text-sm font-medium ${
+                language === lang.value ? 'text-clinical' : 'text-gray-600'
+              }`}>
+                {lang.label}
+              </span>
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-gray-400 mt-1.5">
+          The family summary will be written in this language. Physician notes stay in English.
+        </p>
       </div>
 
       {familyPresent && (

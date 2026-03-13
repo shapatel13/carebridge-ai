@@ -1,8 +1,18 @@
-import { ChevronRight, Pencil, Heart, HeartOff } from 'lucide-react'
+import { ChevronRight, Pencil, Heart, HeartOff, Globe } from 'lucide-react'
+
+const LANGUAGE_LABELS: Record<string, string> = {
+  english: '🇺🇸 English',
+  spanish: '🇪🇸 Español',
+  chinese: '🇨🇳 中文',
+  vietnamese: '🇻🇳 Tiếng Việt',
+  arabic: '🇸🇦 العربية',
+  korean: '🇰🇷 한국어',
+}
 
 interface Props {
   patientAlias: string
   familyPresent: boolean
+  language: string
   surName: string
   surRelation: string
   organSupports: string[]
@@ -17,7 +27,7 @@ interface Props {
 }
 
 export default function StepReview({
-  patientAlias, familyPresent, surName, surRelation, organSupports,
+  patientAlias, familyPresent, language, surName, surRelation, organSupports,
   segments, tone, codeDiscussed, annotations, familyQuestions,
   onStepClick, onGenerate, generating,
 }: Props) {
@@ -58,6 +68,12 @@ export default function StepReview({
                 <HeartOff className="w-3.5 h-3.5" /> Not present
               </span>
             )}
+          </p>
+          <p className="flex items-center gap-2">
+            <span className="text-muted">Language:</span>
+            <span className="inline-flex items-center gap-1 font-medium">
+              <Globe className="w-3.5 h-3.5 text-clinical" /> {LANGUAGE_LABELS[language] || language}
+            </span>
           </p>
           {surName && <p><span className="text-muted">Surrogate:</span> {surName} ({surRelation})</p>}
           {organSupports.length > 0 && (

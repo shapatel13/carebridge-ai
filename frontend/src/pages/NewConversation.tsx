@@ -21,6 +21,7 @@ export default function NewConversation() {
   // Step 1: Patient & People
   const [patientAlias, setPatientAlias] = useState('Patient A')
   const [familyPresent, setFamilyPresent] = useState(false)
+  const [language, setLanguage] = useState('english')
   const [surName, setSurName] = useState('')
   const [surRelation, setSurRelation] = useState('')
   const [organSupports, setOrganSupports] = useState<string[]>([])
@@ -79,6 +80,7 @@ export default function NewConversation() {
         organ_supports: organSupports.length > 0 ? organSupports : null,
         code_status_discussed: codeDiscussed,
         family_present: familyPresent,
+        language: language,
         surrogate_name: surName || null,
         surrogate_relationship: surRelation || null,
         family_questions: familyQuestions.length > 0 ? familyQuestions : null,
@@ -116,6 +118,8 @@ export default function NewConversation() {
               setPatientAlias={setPatientAlias}
               familyPresent={familyPresent}
               setFamilyPresent={setFamilyPresent}
+              language={language}
+              setLanguage={setLanguage}
               surName={surName}
               setSurName={setSurName}
               surRelation={surRelation}
@@ -146,6 +150,7 @@ export default function NewConversation() {
             <StepReview
               patientAlias={patientAlias}
               familyPresent={familyPresent}
+              language={language}
               surName={surName}
               surRelation={surRelation}
               organSupports={organSupports}

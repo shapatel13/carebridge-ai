@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useConversation } from '../hooks/useConversation'
+import { useAuth } from '../hooks/useAuth'
 import AppHeader from '../components/AppHeader'
 import {
   FileText,
   Heart,
+  HeartOff,
   AlertTriangle,
   Shield,
   Copy,
@@ -13,6 +15,7 @@ import {
   ChevronUp,
   ArrowLeft,
   CheckCircle,
+  Pencil,
 } from 'lucide-react'
 
 const NOTE_SECTIONS = [
@@ -28,7 +31,8 @@ const NOTE_SECTIONS = [
 export default function ConversationReview() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { conversation, output, loading, loadConversation, finalizeConversation } =
+  const { user } = useAuth()
+  const { conversation, output, loading, loadConversation, finalizeConversation, updateConversation, generateOutput } =
     useConversation()
 
   const [copied, setCopied] = useState(false)
@@ -36,10 +40,19 @@ export default function ConversationReview() {
     new Set(NOTE_SECTIONS.map((s) => s.key))
   )
   const [finalizing, setFinalizing] = useState(false)
+  const [regenerating, setRegenerating] = useState(false)
+  const [editingSummary, setEditingSummary] = useState(false)
+  const [editedSummary, setEditedSummary] = useState('')
 
   useEffect(() => {
     if (id) loadConversation(id)
   }, [id])
+
+  useEffect(() => {
+    if (output?.family_summary && !editedSummary) {
+      setEditedSummary(output.family_summary)
+    }
+  }, [output])
 
   const toggleSection = (key: string) => {
     setExpandedSections((prev) => {
@@ -75,8 +88,34 @@ export default function ConversationReview() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-navy" />
+      <div className="min-h-screen bg-gray-50">
+        <AppHeader />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+          <div className="mb-6">
+            <div className="h-7 w-48 skeleton-pulse rounded mb-2" />
+            <div className="h-4 w-64 skeleton-pulse rounded" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <div className="h-5 w-32 skeleton-pulse rounded mb-4" />
+              <div className="space-y-3">
+                <div className="h-4 w-full skeleton-pulse rounded" />
+                <div className="h-4 w-full skeleton-pulse rounded" />
+                <div className="h-4 w-3/4 skeleton-pulse rounded" />
+                <div className="h-4 w-full skeleton-pulse rounded" />
+                <div className="h-4 w-5/6 skeleton-pulse rounded" />
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <div className="h-5 w-32 skeleton-pulse rounded mb-4" />
+              <div className="space-y-3">
+                <div className="h-4 w-full skeleton-pulse rounded" />
+                <div className="h-4 w-full skeleton-pulse rounded" />
+                <div className="h-4 w-2/3 skeleton-pulse rounded" />
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     )
   }
@@ -103,9 +142,18 @@ export default function ConversationReview() {
             <h2 className="text-xl font-bold text-body">
               Review: {conversation.patient_alias}
             </h2>
-            <p className="text-sm text-muted mt-1">
+            <p className="text-sm text-muted mt-1 flex items-center gap-2 flex-wrap">
               Generated {new Date(output.created_at).toLocaleString()} &middot;
               Tone: {conversation.tone_setting}
+              {conversation.family_present ? (
+                <span className="inline-flex items-center gap-1 text-xs bg-clinical/10 text-clinical px-2 py-0.5 rounded-full font-medium">
+                  <Heart className="w-3 h-3" /> Family Present
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-xs bg-navy/10 text-navy px-2 py-0.5 rounded-full font-medium">
+                  <HeartOff className="w-3 h-3" /> Family Not Present
+                </span>
+              )}
             </p>
           </div>
           <button
@@ -114,6 +162,38 @@ export default function ConversationReview() {
           >
             <ArrowLeft className="w-4 h-4" /> Edit Inputs
           </button>
+        </div>
+
+        {/* Regenerate with tone */}
+        <div className="mb-6 flex items-center gap-3">
+          <span className="text-sm text-muted">Regenerate with tone:</span>
+          {['optimistic', 'neutral', 'concerned'].map((t) => (
+            <button
+              key={t}
+              onClick={async () => {
+                if (!id) return
+                setRegenerating(true)
+                try {
+                  await updateConversation(id, { tone_setting: t })
+                  await generateOutput(id)
+                  await loadConversation(id)
+                } catch (err: any) {
+                  alert('Failed to regenerate')
+                } finally {
+                  setRegenerating(false)
+                }
+              }}
+              disabled={regenerating}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                conversation.tone_setting === t
+                  ? 'bg-navy text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              } disabled:opacity-50`}
+            >
+              {t === 'optimistic' ? '🌤️ Hopeful' : t === 'neutral' ? '📋 Neutral' : '⚠️ Concerned'}
+            </button>
+          ))}
+          {regenerating && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-navy" />}
         </div>
 
         {/* Risk Flags */}
@@ -153,11 +233,47 @@ export default function ConversationReview() {
             <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2 bg-gradient-to-r from-clinical/5 to-transparent">
               <Heart className="w-5 h-5 text-clinical" />
               <h3 className="font-bold text-body">Family Summary</h3>
+              <button
+                onClick={() => { setEditedSummary(editedSummary || output.family_summary); setEditingSummary(true) }}
+                className="ml-auto p-1 text-muted hover:text-clinical transition-colors rounded"
+                title="Edit summary"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
             </div>
             <div className="px-6 py-5">
-              <div className="prose prose-sm max-w-none text-body leading-relaxed whitespace-pre-wrap">
-                {output.family_summary}
-              </div>
+              {editingSummary ? (
+                <div>
+                  <textarea
+                    value={editedSummary}
+                    onChange={(e) => setEditedSummary(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm resize-none focus:border-clinical focus:ring-2 focus:ring-clinical/20 outline-none"
+                    rows={8}
+                  />
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => setEditingSummary(false)}
+                      className="px-4 py-2 bg-navy text-white text-xs font-medium rounded-lg hover:bg-navy-dark transition-colors"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => { setEditedSummary(output.family_summary); setEditingSummary(false) }}
+                      className="px-4 py-2 border border-gray-200 text-xs font-medium rounded-lg text-muted hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className="prose prose-sm max-w-none text-body leading-relaxed whitespace-pre-wrap cursor-pointer hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors"
+                  onClick={() => { setEditedSummary(editedSummary || output.family_summary); setEditingSummary(true) }}
+                  title="Click to edit"
+                >
+                  {editedSummary || output.family_summary}
+                </div>
+              )}
               <div className="mt-4 pt-4 border-t border-gray-100">
                 <p className="text-xs text-muted italic">
                   Written at approximately 6th-grade reading level for family

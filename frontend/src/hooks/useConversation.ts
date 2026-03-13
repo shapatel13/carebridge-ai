@@ -34,6 +34,7 @@ interface Conversation {
   organ_supports: string[] | null
   code_status_discussed: boolean
   family_present: boolean
+  language: string
   code_status_change: string | null
   surrogate_name: string | null
   surrogate_relationship: string | null

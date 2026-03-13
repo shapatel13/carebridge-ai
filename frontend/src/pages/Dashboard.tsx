@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
 import api from '../lib/api'
 import AppHeader from '../components/AppHeader'
 import {
@@ -8,8 +9,6 @@ import {
   AlertTriangle,
   Clock,
   CheckCircle,
-  Heart,
-  HeartOff,
 } from 'lucide-react'
 
 interface ConversationSummary {
@@ -26,6 +25,7 @@ interface ConversationSummary {
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [conversations, setConversations] = useState<ConversationSummary[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -127,19 +127,6 @@ export default function Dashboard() {
                       {conv.organ_supports.length > 1 ? 's' : ''}
                     </p>
                   )}
-                  <p className="flex items-center gap-1">
-                    {conv.family_present ? (
-                      <>
-                        <Heart className="w-3 h-3 text-clinical" />
-                        Family present
-                      </>
-                    ) : (
-                      <>
-                        <HeartOff className="w-3 h-3 text-gray-400" />
-                        Family not present
-                      </>
-                    )}
-                  </p>
                 </div>
               </button>
             ))}

@@ -34,6 +34,7 @@ class Conversation(Base):
     organ_supports: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     code_status_discussed: Mapped[bool] = mapped_column(Boolean, default=False)
     family_present: Mapped[bool] = mapped_column(Boolean, default=False)
+    language: Mapped[str] = mapped_column(String(20), default="english")
     code_status_change: Mapped[str | None] = mapped_column(String(255), nullable=True)
     surrogate_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     surrogate_relationship: Mapped[str | None] = mapped_column(String(255), nullable=True)

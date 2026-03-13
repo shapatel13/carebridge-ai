@@ -6,11 +6,10 @@ import AppHeader from '../components/AppHeader'
 import {
   CheckCircle,
   Plus,
+  FileDown,
   Calendar,
   User,
   AlertTriangle,
-  Heart,
-  HeartOff,
 } from 'lucide-react'
 
 export default function ConversationSuccess() {
@@ -86,19 +85,6 @@ export default function ConversationSuccess() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              {conversation?.family_present ? (
-                <Heart className="w-5 h-5 text-clinical" />
-              ) : (
-                <HeartOff className="w-5 h-5 text-muted" />
-              )}
-              <div>
-                <p className="text-xs text-muted">Family</p>
-                <p className="text-sm font-medium text-body">
-                  {conversation?.family_present ? 'Present during conversation' : 'Not present'}
-                </p>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -110,6 +96,14 @@ export default function ConversationSuccess() {
           >
             <Plus className="w-5 h-5" />
             Start New Conversation
+          </button>
+          <button
+            disabled
+            className="w-full px-6 py-3 border border-gray-200 text-muted font-medium rounded-xl cursor-not-allowed opacity-60 flex items-center justify-center gap-2"
+            title="Available in Phase 2"
+          >
+            <FileDown className="w-5 h-5" />
+            Export Log PDF (Phase 2)
           </button>
         </div>
       </main>

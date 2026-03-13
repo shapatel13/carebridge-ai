@@ -39,6 +39,18 @@ FAMILY PRESENCE RULES:
 6. If family_present is true in the metadata: Write a BRIEF family summary (100-120 words). The family heard the conversation live — this is a take-home reminder. Open with "As we discussed today..."
 7. If family_present is false in the metadata: Write a DETAILED family summary (200-250 words). The family was NOT present — this is their primary way of understanding what happened. Open with phrasing like "Your loved one's care team met to discuss..."
 
+LANGUAGE RULES:
+8. Check the "language" field in the metadata. The family_summary MUST be written entirely in that language.
+9. Supported languages: english, spanish, chinese, vietnamese, arabic, korean
+10. If language is "english" or not specified, write in English (default).
+11. If language is "spanish", write the ENTIRE family_summary in Spanish.
+12. If language is "chinese", write the ENTIRE family_summary in Simplified Chinese.
+13. If language is "vietnamese", write the ENTIRE family_summary in Vietnamese.
+14. If language is "arabic", write the ENTIRE family_summary in Arabic.
+15. If language is "korean", write the ENTIRE family_summary in Korean.
+16. The physician_note must ALWAYS remain in English regardless of the language setting.
+17. Keep the same 6th-grade reading level and compassionate tone in all languages.
+
 You MUST respond with valid JSON matching this exact schema:
 {
   "physician_note": {
@@ -106,8 +118,10 @@ async def generate_outputs(
 
     # If no API key configured, return demo output
     if not settings.anthropic_api_key:
-        logger.info("No Anthropic API key configured, returning demo output")
+        logger.warning("No Anthropic API key configured — returning DEMO output. Set ANTHROPIC_API_KEY in backend/.env")
         return DEMO_OUTPUT
+
+    logger.info(f"API key found (starts with {settings.anthropic_api_key[:12]}...)")
 
     try:
         import anthropic
@@ -126,8 +140,12 @@ METADATA:
 
 Generate the structured physician note, family summary, and risk flags based on this conversation transcript. Respond with valid JSON only."""
 
+        logger.info(f"Calling Claude API with model claude-haiku-4-5-20251001")
+        logger.info(f"Transcript length: {len(transcript)} chars")
+        logger.info(f"Tone: {tone}")
+
         message = client.messages.create(
-            model="claude-sonnet-4-6",
+            model="claude-haiku-4-5-20251001",
             max_tokens=4096,
             system=SYSTEM_PROMPT,
             messages=[{"role": "user", "content": user_message}],
@@ -152,5 +170,8 @@ Generate the structured physician note, family summary, and risk flags based on 
         return result
 
     except Exception as e:
-        logger.error(f"Claude API error: {e}, returning demo output")
+        logger.error(f"Claude API error: {type(e).__name__}: {e}")
+        logger.error(f"API key loaded: {'yes' if settings.anthropic_api_key else 'NO'}")
+        logger.error(f"API key prefix: {settings.anthropic_api_key[:20]}..." if settings.anthropic_api_key else "NO KEY")
+        logger.error("Falling back to DEMO output")
         return DEMO_OUTPUT
