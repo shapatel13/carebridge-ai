@@ -56,6 +56,21 @@ DEDUPLICATION RULES:
 19. These tags may overlap with what was said in the transcript. If information appears in BOTH the transcript and metadata, use the transcript as the primary source and treat metadata tags as confirmation — do NOT repeat the same point twice in the physician note.
 20. Prioritize the transcript's richer detail over the tag's brief label.
 
+READABILITY ASSESSMENT:
+21. After writing the family_summary, estimate its readability as a US grade level (e.g. 5.2 means a 5th-grader could understand it). Return this as "readability_grade".
+22. For English text, approximate the Flesch-Kincaid grade level.
+23. For non-English text, estimate the equivalent grade level for a native reader of that language. The target is always grade 6 or below.
+
+AI COMMUNICATION INSIGHTS:
+24. Score the physician's communication on three dimensions (1-10 scale):
+    - empathy: Did the physician acknowledge emotions, validate feelings, use compassionate language?
+    - clarity: Was the medical information explained in understandable terms? Were jargon terms defined?
+    - completeness: Were all key topics covered (prognosis, uncertainty, code status, next steps)?
+25. Provide a brief rationale (1 sentence) for each score as empathy_rationale, clarity_rationale, completeness_rationale.
+26. Calculate an overall score as the weighted average: empathy*0.4 + clarity*0.35 + completeness*0.25, rounded to nearest integer.
+27. Write a "family_takeaway" — one sentence capturing what the family likely took away from this conversation.
+28. Write 3 "next_steps" — actionable talking points the physician should prepare for the next family meeting.
+
 You MUST respond with valid JSON matching this exact schema:
 {
   "physician_note": {
@@ -68,9 +83,23 @@ You MUST respond with valid JSON matching this exact schema:
     "surrogate_decision_maker": "string"
   },
   "family_summary": "string",
+  "readability_grade": 5.2,
   "risk_flags": [
     {"type": "string", "severity": "yellow|red", "message": "string", "suggestion": "string"}
-  ]
+  ],
+  "ai_insights": {
+    "communication_scores": {
+      "empathy": 8,
+      "clarity": 7,
+      "completeness": 6,
+      "overall": 7,
+      "empathy_rationale": "string",
+      "clarity_rationale": "string",
+      "completeness_rationale": "string"
+    },
+    "family_takeaway": "string",
+    "next_steps": ["string", "string", "string"]
+  }
 }"""
 
 TONE_INSTRUCTIONS = {
@@ -91,6 +120,24 @@ DEMO_OUTPUT = {
         "surrogate_decision_maker": "Maria Rodriguez, patient's daughter, confirmed as healthcare proxy with legal documentation on file. She expressed willingness to make decisions in alignment with her father's previously stated wishes."
     },
     "family_summary": "Thank you for meeting with us today to talk about your father's care. We know this is an incredibly difficult and emotional time, and your love for your father is clear.\n\nHere is a summary of what we discussed:\n\nYour father is currently in the ICU receiving support from a breathing machine (ventilator) and medications to help maintain his blood pressure. His kidneys are also not working as well as we would like, and the team is watching them closely.\n\nOver the past few days, his condition has become more serious. While we are doing everything we can, we want to be honest with you that we are concerned about how things are going. At the same time, we cannot predict exactly what will happen — every patient is different.\n\nWe talked about what your father would want for his care. Maria shared that he had told her he would not want to be kept on life support if there was no chance of recovery. There is no rush to make any decisions — take the time you need to talk as a family.\n\nYour care team is here for you. Please reach out anytime with questions.",
+    "readability_grade": 5.4,
+    "ai_insights": {
+        "communication_scores": {
+            "empathy": 9,
+            "clarity": 8,
+            "completeness": 7,
+            "overall": 8,
+            "empathy_rationale": "Dr. Chen consistently validated the family's emotions, acknowledged the difficulty of the situation, and affirmed their love for their father.",
+            "clarity_rationale": "Medical concepts were explained in plain language with parenthetical definitions, though some terms like 'vasopressor' could have been simplified further.",
+            "completeness_rationale": "Prognosis, uncertainty, and code status were addressed; however, specific next steps and timeline for follow-up were not explicitly outlined during the conversation."
+        },
+        "family_takeaway": "Dad is very sick and may not get better, but the doctors are doing everything they can and will support whatever decisions we make about his care.",
+        "next_steps": [
+            "Revisit goals-of-care discussion within 24-48 hours after the family has had time to process and talk among themselves.",
+            "Check in specifically with James (son) who was visibly emotional but did not verbally confirm his understanding of the situation.",
+            "Discuss the possibility of palliative care consultation to provide additional support for the family during decision-making."
+        ]
+    },
     "risk_flags": [
         {
             "type": "pending_code_status",

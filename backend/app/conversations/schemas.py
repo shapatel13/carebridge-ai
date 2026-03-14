@@ -97,7 +97,9 @@ class GeneratedOutputResponse(BaseModel):
     conversation_id: str
     physician_note: dict
     family_summary: str
+    readability_grade: float | None = None
     risk_flags: list[dict]
+    ai_insights: dict | None = None
     created_at: str
 
     model_config = {"from_attributes": True}

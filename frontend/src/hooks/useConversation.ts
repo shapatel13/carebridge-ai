@@ -13,12 +13,26 @@ interface GeneratedOutput {
   conversation_id: string
   physician_note: Record<string, string>
   family_summary: string
+  readability_grade?: number | null
   risk_flags: Array<{
     type: string
     severity: string
     message: string
     suggestion: string
   }>
+  ai_insights?: {
+    communication_scores: {
+      empathy: number
+      clarity: number
+      completeness: number
+      overall: number
+      empathy_rationale?: string
+      clarity_rationale?: string
+      completeness_rationale?: string
+    }
+    family_takeaway: string
+    next_steps: string[]
+  } | null
   created_at: string
 }
 

@@ -131,7 +131,9 @@ async def get_conversation(
             conversation_id=conversation.output.conversation_id,
             physician_note=conversation.output.physician_note,
             family_summary=conversation.output.family_summary,
+            readability_grade=conversation.output.readability_grade,
             risk_flags=conversation.output.risk_flags,
+            ai_insights=conversation.output.ai_insights,
             created_at=str(conversation.output.created_at),
         ) if conversation.output else None,
     )
@@ -264,7 +266,9 @@ async def generate_output(
         conversation_id=conversation_id,
         physician_note=output_data.get("physician_note", {}),
         family_summary=output_data.get("family_summary", ""),
+        readability_grade=output_data.get("readability_grade"),
         risk_flags=output_data.get("risk_flags", []),
+        ai_insights=output_data.get("ai_insights"),
     )
     db.add(generated)
     await db.flush()
@@ -274,7 +278,9 @@ async def generate_output(
         conversation_id=generated.conversation_id,
         physician_note=generated.physician_note,
         family_summary=generated.family_summary,
+        readability_grade=generated.readability_grade,
         risk_flags=generated.risk_flags,
+        ai_insights=generated.ai_insights,
         created_at=str(generated.created_at),
     )
 

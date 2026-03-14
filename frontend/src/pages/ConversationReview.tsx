@@ -5,7 +5,8 @@ import { useAuth } from '../hooks/useAuth'
 import AppHeader from '../components/AppHeader'
 import RiskTimeline from '../components/RiskTimeline'
 import { generateFamilySummaryPdf } from '../lib/generatePdf'
-import { fleschKincaidGrade, gradeSeverity } from '../lib/readability'
+import { getReadabilityGrade, gradeSeverity } from '../lib/readability'
+import CommunicationScorecard from '../components/CommunicationScorecard'
 import {
   FileText,
   Heart,
@@ -147,8 +148,12 @@ export default function ConversationReview() {
     )
   }
 
-  // Readability
-  const readabilityGrade = fleschKincaidGrade(editedSummary || output.family_summary)
+  // Readability — language-aware
+  const { grade: readabilityGrade, source: readabilitySource } = getReadabilityGrade(
+    editedSummary || output.family_summary,
+    conversation.language,
+    output.readability_grade,
+  )
   const readabilitySeverity = gradeSeverity(readabilityGrade)
 
   return (
@@ -281,6 +286,11 @@ export default function ConversationReview() {
           </div>
         )}
 
+        {/* AI Communication Insights */}
+        {output.ai_insights?.communication_scores && (
+          <CommunicationScorecard insights={output.ai_insights as any} />
+        )}
+
         {/* Risk Timeline */}
         <RiskTimeline flags={output.risk_flags} />
 
@@ -343,6 +353,9 @@ export default function ConversationReview() {
                 }`}>
                   <BookOpen className="w-3 h-3" />
                   Grade {readabilityGrade}
+                  {readabilitySource === 'ai-assessed' && (
+                    <span className="ml-1 text-[10px] bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300 px-1.5 py-0.5 rounded-full font-bold">AI</span>
+                  )}
                 </span>
               </div>
             </div>

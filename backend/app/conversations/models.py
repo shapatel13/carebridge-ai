@@ -69,7 +69,9 @@ class GeneratedOutput(Base):
     conversation_id: Mapped[str] = mapped_column(String(36), ForeignKey("conversations.id"), unique=True, nullable=False)
     physician_note: Mapped[dict] = mapped_column(JSON, nullable=False)
     family_summary: Mapped[str] = mapped_column(Text, nullable=False)
+    readability_grade: Mapped[float | None] = mapped_column(Float, nullable=True)
     risk_flags: Mapped[dict] = mapped_column(JSON, nullable=False, default=list)
+    ai_insights: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     conversation: Mapped["Conversation"] = relationship("Conversation", back_populates="output")

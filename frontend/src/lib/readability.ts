@@ -40,3 +40,28 @@ export function gradeSeverity(grade: number): 'green' | 'yellow' | 'red' {
   if (grade <= 8) return 'yellow'
   return 'red'
 }
+
+/**
+ * Language-aware readability grade.
+ * Uses Flesch-Kincaid for English; falls back to LLM-assessed grade for other languages.
+ */
+export function getReadabilityGrade(
+  text: string,
+  language: string,
+  llmGrade?: number | null,
+): { grade: number; source: 'flesch-kincaid' | 'ai-assessed' } {
+  const isEnglish = !language || language === 'english'
+
+  if (isEnglish) {
+    const fk = fleschKincaidGrade(text)
+    return { grade: fk, source: 'flesch-kincaid' }
+  }
+
+  // For non-English, prefer the LLM-assessed grade
+  if (llmGrade != null && llmGrade > 0) {
+    return { grade: llmGrade, source: 'ai-assessed' }
+  }
+
+  // Fallback: still use Flesch-Kincaid (imperfect for non-English)
+  return { grade: fleschKincaidGrade(text), source: 'flesch-kincaid' }
+}

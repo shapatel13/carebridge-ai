@@ -1,14 +1,21 @@
 @echo off
-REM AI Investment Portfolio Analysis System - Startup Script (Windows)
+REM CareBridge AI - Startup Script (Windows)
 
 echo =================================================================
-echo   AI Investment Portfolio Analysis System
+echo   CareBridge AI - ICU Communication Platform
 echo =================================================================
 echo.
 
 set "SCRIPT_DIR=%~dp0"
 set "FRONTEND_DIR=%SCRIPT_DIR%frontend"
 set "BACKEND_DIR=%SCRIPT_DIR%backend"
+
+REM Load API key from backend/.env if not already set
+if "%ANTHROPIC_API_KEY%"=="" (
+    for /f "tokens=1,* delims==" %%a in ('type "%BACKEND_DIR%\.env" 2^>nul ^| findstr "ANTHROPIC_API_KEY"') do (
+        set "ANTHROPIC_API_KEY=%%b"
+    )
+)
 
 echo [1/4] Checking prerequisites...
 node --version >nul 2>&1
