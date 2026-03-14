@@ -107,3 +107,15 @@ class ConversationDetailResponse(BaseModel):
     conversation: ConversationResponse
     segments: list[SegmentResponse]
     output: GeneratedOutputResponse | None = None
+
+
+class HandoffRequest(BaseModel):
+    patient_alias: str | None = None
+
+
+class HandoffResponse(BaseModel):
+    summary: str
+    patient_count: int
+    conversation_count: int
+    pending_flags: list[dict]
+    generated_at: str

@@ -34,9 +34,9 @@ export default function StepReview({
   const wordCount = segments.join(' ').split(/\s+/).filter(Boolean).length
 
   const Section = ({ title, step, children }: { title: string; step: number; children: React.ReactNode }) => (
-    <div className="bg-white rounded-xl border border-gray-100 p-5">
+    <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 p-5 transition-colors">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-gray-700">{title}</h3>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-200">{title}</h3>
         <button
           onClick={() => onStepClick(step)}
           className="text-xs text-clinical hover:text-clinical-dark flex items-center gap-1 font-medium"
@@ -50,7 +50,7 @@ export default function StepReview({
 
   return (
     <div className="max-w-lg mx-auto space-y-4">
-      <p className="text-center text-sm text-muted mb-6">
+      <p className="text-center text-sm text-muted dark:text-slate-400 mb-6">
         Review your inputs before generating documentation.
       </p>
 
@@ -79,7 +79,7 @@ export default function StepReview({
           {organSupports.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1">
               {organSupports.map((os, i) => (
-                <span key={i} className="px-2 py-0.5 bg-gray-100 rounded text-xs">{os}</span>
+                <span key={i} className="px-2 py-0.5 bg-gray-100 dark:bg-slate-700 rounded text-xs dark:text-slate-300">{os}</span>
               ))}
             </div>
           )}
@@ -87,7 +87,7 @@ export default function StepReview({
       </Section>
 
       <Section title="Conversation" step={2}>
-        <p className="text-sm text-muted">{segments.length} segment{segments.length !== 1 ? 's' : ''} &middot; {wordCount} words</p>
+        <p className="text-sm text-muted dark:text-slate-400">{segments.length} segment{segments.length !== 1 ? 's' : ''} &middot; {wordCount} words</p>
         {segments.length > 0 && (
           <p className="text-xs text-gray-400 mt-1 line-clamp-2">{segments[0]}</p>
         )}

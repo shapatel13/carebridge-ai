@@ -15,7 +15,7 @@ interface Props {
 
 export default function WizardProgress({ currentStep, onStepClick, canAdvanceTo }: Props) {
   return (
-    <div className="bg-white border-b border-gray-100">
+    <div className="bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700 transition-colors">
       <div className="max-w-3xl mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {STEPS.map((step, i) => {
@@ -39,15 +39,15 @@ export default function WizardProgress({ currentStep, onStepClick, canAdvanceTo 
                         : isCurrent
                         ? 'bg-navy text-white shadow-md'
                         : isClickable
-                        ? 'bg-gray-200 text-gray-600 group-hover:bg-gray-300'
-                        : 'bg-gray-100 text-gray-400'
+                        ? 'bg-gray-200 text-gray-600 group-hover:bg-gray-300 dark:bg-slate-600 dark:text-slate-300'
+                        : 'bg-gray-100 text-gray-400 dark:bg-slate-700 dark:text-slate-500'
                     }`}
                   >
                     {isCompleted ? <Check className="w-4 h-4" /> : step.num}
                   </div>
                   <span
                     className={`text-sm font-medium hidden sm:block ${
-                      isCurrent ? 'text-navy' : isCompleted ? 'text-success' : 'text-gray-400'
+                      isCurrent ? 'text-navy dark:text-clinical' : isCompleted ? 'text-success' : 'text-gray-400 dark:text-slate-500'
                     }`}
                   >
                     {step.label}
@@ -56,7 +56,7 @@ export default function WizardProgress({ currentStep, onStepClick, canAdvanceTo 
                 {i < STEPS.length - 1 && (
                   <div
                     className={`flex-1 h-0.5 mx-3 rounded ${
-                      currentStep > step.num ? 'bg-success' : 'bg-gray-200'
+                      currentStep > step.num ? 'bg-success' : 'bg-gray-200 dark:bg-slate-600'
                     }`}
                   />
                 )}

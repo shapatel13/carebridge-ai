@@ -101,7 +101,7 @@ export default function NewConversation() {
   const slideClass = direction === 'left' ? 'wizard-slide-left' : 'wizard-slide-right'
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors">
       <AppHeader />
       <WizardProgress
         currentStep={currentStep}
@@ -144,6 +144,7 @@ export default function NewConversation() {
               setAnnotations={setAnnotations}
               familyQuestions={familyQuestions}
               setFamilyQuestions={setFamilyQuestions}
+              transcriptSegments={segments}
             />
           )}
           {currentStep === 4 && (
@@ -168,7 +169,7 @@ export default function NewConversation() {
 
         {/* Error */}
         {error && (
-          <div className="mt-4 text-sm text-danger bg-red-50 rounded-lg px-4 py-3 max-w-lg mx-auto">
+          <div className="mt-4 text-sm text-danger bg-red-50 dark:bg-red-900/30 rounded-lg px-4 py-3 max-w-lg mx-auto">
             {error}
           </div>
         )}
@@ -179,7 +180,7 @@ export default function NewConversation() {
             <button
               onClick={handleBack}
               disabled={currentStep === 1}
-              className="px-6 py-3 border border-gray-200 rounded-xl text-sm font-medium text-muted hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
+              className="px-6 py-3 border border-gray-200 dark:border-slate-600 rounded-xl text-sm font-medium text-muted dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
             >
               <ChevronLeft className="w-4 h-4" />
               Back

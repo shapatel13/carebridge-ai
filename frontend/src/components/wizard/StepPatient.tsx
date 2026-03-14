@@ -38,20 +38,20 @@ export default function StepPatient({
   return (
     <div className="max-w-lg mx-auto space-y-6">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
           Patient Identifier
         </label>
         <input
           type="text"
           value={patientAlias}
           onChange={(e) => setPatientAlias(e.target.value)}
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-clinical focus:ring-2 focus:ring-clinical/20 outline-none transition-all"
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 text-sm focus:border-clinical focus:ring-2 focus:ring-clinical/20 outline-none transition-all"
           placeholder="e.g. Patient A (de-identified)"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">
+        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-3">
           Was the family present for this conversation?
         </label>
         <div className="grid grid-cols-2 gap-3">
@@ -61,7 +61,7 @@ export default function StepPatient({
             className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
               familyPresent
                 ? 'border-clinical bg-clinical/5 shadow-sm'
-                : 'border-gray-200 hover:border-gray-300'
+                : 'border-gray-200 hover:border-gray-300 dark:border-slate-600 dark:hover:border-slate-500'
             }`}
           >
             <Heart className={`w-5 h-5 ${familyPresent ? 'text-clinical' : 'text-gray-400'}`} />
@@ -69,7 +69,7 @@ export default function StepPatient({
               <p className={`text-sm font-semibold ${familyPresent ? 'text-clinical' : 'text-gray-600'}`}>
                 Yes, present
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">Brief summary</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">Brief summary</p>
             </div>
           </button>
           <button
@@ -78,7 +78,7 @@ export default function StepPatient({
             className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
               !familyPresent
                 ? 'border-navy bg-navy/5 shadow-sm'
-                : 'border-gray-200 hover:border-gray-300'
+                : 'border-gray-200 hover:border-gray-300 dark:border-slate-600 dark:hover:border-slate-500'
             }`}
           >
             <HeartOff className={`w-5 h-5 ${!familyPresent ? 'text-navy' : 'text-gray-400'}`} />
@@ -86,14 +86,14 @@ export default function StepPatient({
               <p className={`text-sm font-semibold ${!familyPresent ? 'text-navy' : 'text-gray-600'}`}>
                 Not present
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">Detailed summary</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">Detailed summary</p>
             </div>
           </button>
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2 flex items-center gap-2">
           <Globe className="w-4 h-4 text-clinical" />
           Family Summary Language
         </label>
@@ -106,7 +106,7 @@ export default function StepPatient({
               className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all text-left ${
                 language === lang.value
                   ? 'border-clinical bg-clinical/5 shadow-sm'
-                  : 'border-gray-200 hover:border-gray-300'
+                  : 'border-gray-200 hover:border-gray-300 dark:border-slate-600 dark:hover:border-slate-500'
               }`}
             >
               <span className="text-lg">{lang.flag}</span>
@@ -118,14 +118,14 @@ export default function StepPatient({
             </button>
           ))}
         </div>
-        <p className="text-xs text-gray-400 mt-1.5">
+        <p className="text-xs text-gray-400 dark:text-slate-500 mt-1.5">
           The family summary will be written in this language. Physician notes stay in English.
         </p>
       </div>
 
       {familyPresent && (
         <div className="animate-in">
-          <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+          <h3 className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2 flex items-center gap-2">
             <Users className="w-4 h-4 text-clinical" />
             Surrogate Decision Maker
           </h3>
@@ -134,14 +134,14 @@ export default function StepPatient({
               type="text"
               value={surName}
               onChange={(e) => setSurName(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-clinical focus:ring-2 focus:ring-clinical/20 outline-none"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 text-sm focus:border-clinical focus:ring-2 focus:ring-clinical/20 outline-none"
               placeholder="Name"
             />
             <input
               type="text"
               value={surRelation}
               onChange={(e) => setSurRelation(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-clinical focus:ring-2 focus:ring-clinical/20 outline-none"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 text-sm focus:border-clinical focus:ring-2 focus:ring-clinical/20 outline-none"
               placeholder="Relationship (e.g., Daughter, healthcare proxy)"
             />
           </div>
@@ -149,7 +149,7 @@ export default function StepPatient({
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
           Organ Supports
         </label>
         <div className="flex gap-2 mb-2">
@@ -164,7 +164,7 @@ export default function StepPatient({
                 setOrganInput('')
               }
             }}
-            className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-clinical focus:ring-2 focus:ring-clinical/20 outline-none"
+            className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 text-sm focus:border-clinical focus:ring-2 focus:ring-clinical/20 outline-none"
             placeholder="e.g. Mechanical ventilation"
           />
           <button
@@ -175,14 +175,14 @@ export default function StepPatient({
                 setOrganInput('')
               }
             }}
-            className="px-4 py-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+            className="px-4 py-3 bg-gray-100 dark:bg-slate-700 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
           >
             <Plus className="w-4 h-4" />
           </button>
         </div>
         <div className="flex flex-wrap gap-2">
           {organSupports.map((os, i) => (
-            <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-medium">
+            <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-slate-700 rounded-lg text-xs font-medium dark:text-slate-200">
               {os}
               <button onClick={() => setOrganSupports(organSupports.filter((_, j) => j !== i))}>
                 <X className="w-3 h-3 text-gray-400 hover:text-gray-600" />

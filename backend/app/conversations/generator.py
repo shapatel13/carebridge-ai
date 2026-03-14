@@ -51,6 +51,11 @@ LANGUAGE RULES:
 16. The physician_note must ALWAYS remain in English regardless of the language setting.
 17. Keep the same 6th-grade reading level and compassionate tone in all languages.
 
+DEDUPLICATION RULES:
+18. The METADATA section contains structured tags (clinician_annotations, family_questions, code_status_discussed) provided by the physician as supplemental context.
+19. These tags may overlap with what was said in the transcript. If information appears in BOTH the transcript and metadata, use the transcript as the primary source and treat metadata tags as confirmation — do NOT repeat the same point twice in the physician note.
+20. Prioritize the transcript's richer detail over the tag's brief label.
+
 You MUST respond with valid JSON matching this exact schema:
 {
   "physician_note": {
@@ -175,3 +180,111 @@ Generate the structured physician note, family summary, and risk flags based on 
         logger.error(f"API key prefix: {settings.anthropic_api_key[:20]}..." if settings.anthropic_api_key else "NO KEY")
         logger.error("Falling back to DEMO output")
         return DEMO_OUTPUT
+
+
+HANDOFF_SYSTEM_PROMPT = """You are a shift-handoff assistant for ICU physicians. Given a collection of serious illness conversation summaries from the outgoing physician, generate a concise handoff document for the incoming physician.
+
+CRITICAL RULE: You MUST include a dedicated section for EVERY patient provided in the data. If 2 patients are provided, write about 2 patients. If 5 patients are provided, write about all 5. Do NOT skip or merge patients. Each patient should get their own bold-header section.
+
+Structure your response as JSON with these keys:
+{
+  "summary": "A handoff narrative (scale with patient count: ~150 words per patient + 50 words for pending items). Cover EACH patient with: current status, key decisions made, emotional state of families, and pending items. Write in a professional clinical tone suitable for physician-to-physician communication."
+}
+
+Format the summary with:
+- A header line with the physician name and shift date
+- One **bold section per patient** using markdown-style **Patient Name** headers
+- A final **Pending Items** section consolidating all follow-ups
+- A **Risk Flags** section if any exist
+
+Focus on:
+1. What the incoming physician NEEDS to know immediately for EACH patient
+2. Pending decisions or follow-ups per patient
+3. Family emotional state and dynamics
+4. Any risk flags that require attention
+"""
+
+def _build_demo_handoff(conversations_data: list[dict]) -> dict:
+    """Build a dynamic demo handoff summary from actual conversation data."""
+    patient_aliases = list({c.get("patient_alias", "Unknown Patient") for c in conversations_data})
+    n = len(patient_aliases)
+
+    sections = [f"Shift Handoff Summary\n\nDuring this shift, {n} patient{'s were' if n != 1 else ' was'} discussed:\n"]
+
+    for alias in patient_aliases:
+        # Find conversations for this patient
+        patient_convs = [c for c in conversations_data if c.get("patient_alias") == alias]
+        conv = patient_convs[0]  # primary conversation
+
+        organs = ", ".join(conv.get("organ_supports", [])) if conv.get("organ_supports") else "standard ICU care"
+        code = "Code status was discussed." if conv.get("code_status_discussed") else "Code status not yet addressed."
+        status = conv.get("status", "in_progress")
+        tone = conv.get("tone", "neutral")
+
+        # Pull risk flags if available
+        flags = conv.get("risk_flags", [])
+        flag_text = ""
+        if flags:
+            flag_items = "\n".join(f"  - {f.get('message', '')}" for f in flags[:3])
+            flag_text = f"\n- Risk flags:\n{flag_items}"
+
+        sections.append(
+            f"**{alias}** — Status: {status}\n"
+            f"- Current supports: {organs}\n"
+            f"- Tone of conversation: {tone}\n"
+            f"- {code}"
+            f"{flag_text}\n"
+        )
+
+    sections.append(
+        "**Pending Items:**\n"
+        "- Review and follow up on any open risk flags for each patient above\n"
+        "- Continue goals-of-care discussions as clinically indicated\n"
+        "- Ensure all family members confirm understanding of current plan"
+    )
+
+    return {"summary": "\n".join(sections)}
+
+
+async def generate_handoff(conversations_data: list[dict]) -> dict:
+    """Generate a shift handoff summary from multiple conversations."""
+    if not settings.anthropic_api_key:
+        logger.warning("No API key — returning DEMO handoff")
+        return _build_demo_handoff(conversations_data)
+
+    try:
+        import anthropic
+
+        client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+
+        user_message = f"""Here are the conversation summaries from this shift:
+
+{json.dumps(conversations_data, indent=2)}
+
+Generate a comprehensive shift handoff document. Respond with valid JSON only."""
+
+        message = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=2048,
+            system=HANDOFF_SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": user_message}],
+        )
+
+        response_text = message.content[0].text
+        try:
+            result = json.loads(response_text)
+        except json.JSONDecodeError:
+            if "```json" in response_text:
+                json_str = response_text.split("```json")[1].split("```")[0].strip()
+                result = json.loads(json_str)
+            elif "```" in response_text:
+                json_str = response_text.split("```")[1].split("```")[0].strip()
+                result = json.loads(json_str)
+            else:
+                raise
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Handoff generation error: {e}")
+        return _build_demo_handoff(conversations_data)

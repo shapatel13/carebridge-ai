@@ -3,12 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useConversation } from '../hooks/useConversation'
 import { useAuth } from '../hooks/useAuth'
 import AppHeader from '../components/AppHeader'
+import RiskTimeline from '../components/RiskTimeline'
+import { generateFamilySummaryPdf } from '../lib/generatePdf'
+import { fleschKincaidGrade, gradeSeverity } from '../lib/readability'
 import {
   FileText,
   Heart,
   HeartOff,
-  AlertTriangle,
-  Shield,
   Copy,
   Check,
   ChevronDown,
@@ -16,6 +17,8 @@ import {
   ArrowLeft,
   CheckCircle,
   Pencil,
+  Download,
+  BookOpen,
 } from 'lucide-react'
 
 const NOTE_SECTIONS = [
@@ -43,6 +46,10 @@ export default function ConversationReview() {
   const [regenerating, setRegenerating] = useState(false)
   const [editingSummary, setEditingSummary] = useState(false)
   const [editedSummary, setEditedSummary] = useState('')
+
+  // Comparison state
+  const [previousOutput, setPreviousOutput] = useState<{ summary: string; tone: string } | null>(null)
+  const [showComparison, setShowComparison] = useState(false)
 
   useEffect(() => {
     if (id) loadConversation(id)
@@ -86,9 +93,21 @@ export default function ConversationReview() {
     }
   }
 
+  const handleDownloadPdf = () => {
+    if (!output || !conversation) return
+    generateFamilySummaryPdf({
+      hospitalName: 'Metro General Hospital',
+      physicianName: user?.full_name || 'Physician',
+      patientAlias: conversation.patient_alias,
+      familySummary: editedSummary || output.family_summary,
+      date: new Date(output.created_at).toLocaleDateString(),
+      language: conversation.language,
+    })
+  }
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors">
         <AppHeader />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
           <div className="mb-6">
@@ -96,7 +115,7 @@ export default function ConversationReview() {
             <div className="h-4 w-64 skeleton-pulse rounded" />
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-6">
               <div className="h-5 w-32 skeleton-pulse rounded mb-4" />
               <div className="space-y-3">
                 <div className="h-4 w-full skeleton-pulse rounded" />
@@ -106,7 +125,7 @@ export default function ConversationReview() {
                 <div className="h-4 w-5/6 skeleton-pulse rounded" />
               </div>
             </div>
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-6">
               <div className="h-5 w-32 skeleton-pulse rounded mb-4" />
               <div className="space-y-3">
                 <div className="h-4 w-full skeleton-pulse rounded" />
@@ -122,27 +141,28 @@ export default function ConversationReview() {
 
   if (!conversation || !output) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-muted">Conversation or output not found.</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900">
+        <p className="text-muted dark:text-slate-400">Conversation or output not found.</p>
       </div>
     )
   }
 
-  const redFlags = output.risk_flags.filter((f: any) => f.severity === 'red')
-  const yellowFlags = output.risk_flags.filter((f: any) => f.severity === 'yellow')
+  // Readability
+  const readabilityGrade = fleschKincaidGrade(editedSummary || output.family_summary)
+  const readabilitySeverity = gradeSeverity(readabilityGrade)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors">
       <AppHeader />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {/* Title */}
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-body">
+            <h2 className="text-xl font-bold text-body dark:text-slate-100">
               Review: {conversation.patient_alias}
             </h2>
-            <p className="text-sm text-muted mt-1 flex items-center gap-2 flex-wrap">
+            <p className="text-sm text-muted dark:text-slate-400 mt-1 flex items-center gap-2 flex-wrap">
               Generated {new Date(output.created_at).toLocaleString()} &middot;
               Tone: {conversation.tone_setting}
               {conversation.family_present ? (
@@ -150,7 +170,7 @@ export default function ConversationReview() {
                   <Heart className="w-3 h-3" /> Family Present
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 text-xs bg-navy/10 text-navy px-2 py-0.5 rounded-full font-medium">
+                <span className="inline-flex items-center gap-1 text-xs bg-navy/10 text-navy dark:bg-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-full font-medium">
                   <HeartOff className="w-3 h-3" /> Family Not Present
                 </span>
               )}
@@ -166,19 +186,26 @@ export default function ConversationReview() {
 
         {/* Regenerate with tone */}
         <div className="mb-6 flex items-center gap-3">
-          <span className="text-sm text-muted">Regenerate with tone:</span>
+          <span className="text-sm text-muted dark:text-slate-400">Regenerate with tone:</span>
           {['optimistic', 'neutral', 'concerned'].map((t) => (
             <button
               key={t}
               onClick={async () => {
-                if (!id) return
+                if (!id || !output) return
                 setRegenerating(true)
+                // Save current output before regenerating
+                setPreviousOutput({
+                  summary: editedSummary || output.family_summary,
+                  tone: conversation.tone_setting,
+                })
                 try {
                   await updateConversation(id, { tone_setting: t })
                   await generateOutput(id)
                   await loadConversation(id)
+                  setShowComparison(true)
                 } catch (err: any) {
                   alert('Failed to regenerate')
+                  setPreviousOutput(null)
                 } finally {
                   setRegenerating(false)
                 }
@@ -187,7 +214,7 @@ export default function ConversationReview() {
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 conversation.tone_setting === t
                   ? 'bg-navy text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
               } disabled:opacity-50`}
             >
               {t === 'optimistic' ? '🌤️ Hopeful' : t === 'neutral' ? '📋 Neutral' : '⚠️ Concerned'}
@@ -196,43 +223,74 @@ export default function ConversationReview() {
           {regenerating && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-navy" />}
         </div>
 
-        {/* Risk Flags */}
-        {output.risk_flags.length > 0 && (
-          <div className="mb-6 space-y-2">
-            {redFlags.map((flag: any, i: number) => (
-              <div
-                key={`red-${i}`}
-                className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4"
+        {/* Side-by-side comparison */}
+        {showComparison && previousOutput && output && (
+          <div className="mb-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden transition-colors">
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between bg-gradient-to-r from-clinical/5 to-navy/5 dark:from-clinical/10 dark:to-navy/10">
+              <h3 className="font-bold text-body dark:text-slate-100">Tone Comparison</h3>
+              <button
+                onClick={() => setShowComparison(false)}
+                className="text-xs text-muted dark:text-slate-400 hover:text-body dark:hover:text-slate-200 transition-colors"
               >
-                <Shield className="w-5 h-5 text-danger mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-semibold text-red-800">{flag.message}</p>
-                  <p className="text-xs text-red-600 mt-1">{flag.suggestion}</p>
+                Dismiss
+              </button>
+            </div>
+            <div className="grid grid-cols-2 divide-x divide-gray-100 dark:divide-slate-700">
+              <div className="p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xs font-medium bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 px-2 py-0.5 rounded-full">
+                    Previous: {previousOutput.tone}
+                  </span>
                 </div>
+                <p className="text-sm text-body dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
+                  {previousOutput.summary}
+                </p>
               </div>
-            ))}
-            {yellowFlags.map((flag: any, i: number) => (
-              <div
-                key={`yellow-${i}`}
-                className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4"
+              <div className="p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xs font-medium bg-navy text-white px-2 py-0.5 rounded-full">
+                    Current: {conversation.tone_setting}
+                  </span>
+                </div>
+                <p className="text-sm text-body dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
+                  {editedSummary || output.family_summary}
+                </p>
+              </div>
+            </div>
+            <div className="px-6 py-3 border-t border-gray-100 dark:border-slate-700 flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setEditedSummary(previousOutput.summary)
+                  setShowComparison(false)
+                  setPreviousOutput(null)
+                }}
+                className="px-4 py-2 text-xs font-medium border border-gray-200 dark:border-slate-600 rounded-lg text-muted dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
               >
-                <AlertTriangle className="w-5 h-5 text-warning mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-semibold text-amber-800">{flag.message}</p>
-                  <p className="text-xs text-amber-600 mt-1">{flag.suggestion}</p>
-                </div>
-              </div>
-            ))}
+                Revert to Previous
+              </button>
+              <button
+                onClick={() => {
+                  setShowComparison(false)
+                  setPreviousOutput(null)
+                }}
+                className="px-4 py-2 text-xs font-medium bg-navy text-white rounded-lg hover:bg-navy-dark transition-colors"
+              >
+                Keep New
+              </button>
+            </div>
           </div>
         )}
+
+        {/* Risk Timeline */}
+        <RiskTimeline flags={output.risk_flags} />
 
         {/* Two-column layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Family Summary */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2 bg-gradient-to-r from-clinical/5 to-transparent">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden transition-colors">
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-700 flex items-center gap-2 bg-gradient-to-r from-clinical/5 to-transparent dark:from-clinical/10">
               <Heart className="w-5 h-5 text-clinical" />
-              <h3 className="font-bold text-body">Family Summary</h3>
+              <h3 className="font-bold text-body dark:text-slate-100">Family Summary</h3>
               <button
                 onClick={() => { setEditedSummary(editedSummary || output.family_summary); setEditingSummary(true) }}
                 className="ml-auto p-1 text-muted hover:text-clinical transition-colors rounded"
@@ -247,7 +305,7 @@ export default function ConversationReview() {
                   <textarea
                     value={editedSummary}
                     onChange={(e) => setEditedSummary(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm resize-none focus:border-clinical focus:ring-2 focus:ring-clinical/20 outline-none"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 text-sm resize-none focus:border-clinical focus:ring-2 focus:ring-clinical/20 outline-none"
                     rows={8}
                   />
                   <div className="flex gap-2 mt-3">
@@ -259,7 +317,7 @@ export default function ConversationReview() {
                     </button>
                     <button
                       onClick={() => { setEditedSummary(output.family_summary); setEditingSummary(false) }}
-                      className="px-4 py-2 border border-gray-200 text-xs font-medium rounded-lg text-muted hover:bg-gray-50 transition-colors"
+                      className="px-4 py-2 border border-gray-200 dark:border-slate-600 text-xs font-medium rounded-lg text-muted dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                     >
                       Cancel
                     </button>
@@ -267,32 +325,39 @@ export default function ConversationReview() {
                 </div>
               ) : (
                 <div
-                  className="prose prose-sm max-w-none text-body leading-relaxed whitespace-pre-wrap cursor-pointer hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors"
+                  className="prose prose-sm dark:prose-invert max-w-none text-body dark:text-slate-200 leading-relaxed whitespace-pre-wrap cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700 rounded-lg p-2 -m-2 transition-colors"
                   onClick={() => { setEditedSummary(editedSummary || output.family_summary); setEditingSummary(true) }}
                   title="Click to edit"
                 >
                   {editedSummary || output.family_summary}
                 </div>
               )}
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <p className="text-xs text-muted italic">
-                  Written at approximately 6th-grade reading level for family
-                  comprehension.
+              <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700 flex items-center justify-between">
+                <p className="text-xs text-muted dark:text-slate-400 italic">
+                  Family-friendly reading level target: Grade 6 or below
                 </p>
+                <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${
+                  readabilitySeverity === 'green' ? 'bg-green-50 text-success dark:bg-green-900/30 dark:text-green-400' :
+                  readabilitySeverity === 'yellow' ? 'bg-amber-50 text-warning dark:bg-amber-900/30 dark:text-amber-400' :
+                  'bg-red-50 text-danger dark:bg-red-900/30 dark:text-red-400'
+                }`}>
+                  <BookOpen className="w-3 h-3" />
+                  Grade {readabilityGrade}
+                </span>
               </div>
             </div>
           </div>
 
           {/* Physician Note */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-navy/5 to-transparent">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden transition-colors">
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between bg-gradient-to-r from-navy/5 to-transparent dark:from-navy/10">
               <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-navy" />
-                <h3 className="font-bold text-body">Physician Note</h3>
+                <FileText className="w-5 h-5 text-navy dark:text-clinical" />
+                <h3 className="font-bold text-body dark:text-slate-100">Physician Note</h3>
               </div>
               <button
                 onClick={copyPhysicianNote}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg bg-navy/5 hover:bg-navy/10 text-navy transition-colors"
+                className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg bg-navy/5 hover:bg-navy/10 dark:bg-slate-700 dark:hover:bg-slate-600 text-navy dark:text-slate-200 transition-colors"
               >
                 {copied ? (
                   <>
@@ -305,7 +370,7 @@ export default function ConversationReview() {
                 )}
               </button>
             </div>
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-gray-50 dark:divide-slate-700">
               {NOTE_SECTIONS.map((section) => {
                 const content = output.physician_note[section.key]
                 if (!content) return null
@@ -316,7 +381,7 @@ export default function ConversationReview() {
                       onClick={() => toggleSection(section.key)}
                       className="w-full py-3 flex items-center justify-between text-left"
                     >
-                      <span className="text-sm font-semibold text-navy">
+                      <span className="text-sm font-semibold text-navy dark:text-clinical">
                         {section.label}
                       </span>
                       {isExpanded ? (
@@ -326,7 +391,7 @@ export default function ConversationReview() {
                       )}
                     </button>
                     {isExpanded && (
-                      <p className="pb-4 text-sm text-body leading-relaxed">
+                      <p className="pb-4 text-sm text-body dark:text-slate-300 leading-relaxed">
                         {content}
                       </p>
                     )}
@@ -341,10 +406,17 @@ export default function ConversationReview() {
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-end gap-3">
           <button
             onClick={() => navigate('/new-conversation')}
-            className="px-6 py-3 border border-gray-200 rounded-xl text-sm font-medium text-muted hover:bg-gray-50 transition-colors"
+            className="px-6 py-3 border border-gray-200 dark:border-slate-600 rounded-xl text-sm font-medium text-muted dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
           >
             <ArrowLeft className="w-4 h-4 inline mr-1" />
             Edit Inputs
+          </button>
+          <button
+            onClick={handleDownloadPdf}
+            className="px-6 py-3 border border-clinical rounded-xl text-sm font-medium text-clinical hover:bg-clinical/5 transition-colors flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Download PDF
           </button>
           <button
             onClick={handleFinalize}

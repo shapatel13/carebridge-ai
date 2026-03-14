@@ -4,13 +4,21 @@
 
 @layer base {
   html {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-gray-50 text-gray-900 transition-colors duration-200;
     scroll-behavior: smooth;
   }
 
+  html.dark {
+    @apply bg-slate-900 text-slate-100;
+  }
+
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply bg-gray-50 text-gray-900 antialiased transition-colors duration-200;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  html.dark body {
+    @apply bg-slate-900 text-slate-100;
   }
 }
 
@@ -78,6 +86,12 @@
   /* Skeleton loading pulse */
   .skeleton-pulse {
     background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+    background-size: 200% 100%;
+    animation: skeletonPulse 1.5s ease-in-out infinite;
+  }
+
+  html.dark .skeleton-pulse {
+    background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
     background-size: 200% 100%;
     animation: skeletonPulse 1.5s ease-in-out infinite;
   }
