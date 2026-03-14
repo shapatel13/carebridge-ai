@@ -8,6 +8,8 @@ class ConversationCreate(BaseModel):
     participants: list[str] | None = None
     organ_supports: list[str] | None = None
     code_status_discussed: bool = False
+    family_present: bool = False
+    language: str = "english"
     code_status_change: str | None = None
     surrogate_name: str | None = None
     surrogate_relationship: str | None = None
@@ -22,6 +24,8 @@ class ConversationUpdate(BaseModel):
     participants: list[str] | None = None
     organ_supports: list[str] | None = None
     code_status_discussed: bool | None = None
+    family_present: bool | None = None
+    language: str | None = None
     code_status_change: str | None = None
     surrogate_name: str | None = None
     surrogate_relationship: str | None = None
@@ -49,6 +53,8 @@ class ConversationResponse(BaseModel):
     participants: list[str] | None = None
     organ_supports: list[str] | None = None
     code_status_discussed: bool
+    family_present: bool = False
+    language: str = "english"
     code_status_change: str | None = None
     surrogate_name: str | None = None
     surrogate_relationship: str | None = None
@@ -101,3 +107,15 @@ class ConversationDetailResponse(BaseModel):
     conversation: ConversationResponse
     segments: list[SegmentResponse]
     output: GeneratedOutputResponse | None = None
+
+
+class HandoffRequest(BaseModel):
+    patient_alias: str | None = None
+
+
+class HandoffResponse(BaseModel):
+    summary: str
+    patient_count: int
+    conversation_count: int
+    pending_flags: list[dict]
+    generated_at: str

@@ -11,6 +11,12 @@ export default function StepConversation({ segments, setSegments }: Props) {
   const [isRecording, setIsRecording] = useState(false)
   const recognition = useRef<any>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  // Ref tracks latest segments so the speech callback never has a stale closure
+  const segmentsRef = useRef<string[]>(segments)
+
+  useEffect(() => {
+    segmentsRef.current = segments
+  }, [segments])
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
@@ -29,7 +35,10 @@ export default function StepConversation({ segments, setSegments }: Props) {
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const t = event.results[i][0].transcript
           if (event.results[i].isFinal) {
-            setSegments([...segments, t.trim()])
+            // Use ref to always append to the LATEST segments, not the stale closure
+            const updated = [...segmentsRef.current, t.trim()]
+            segmentsRef.current = updated
+            setSegments(updated)
           } else {
             interim = t
           }
@@ -52,7 +61,12 @@ export default function StepConversation({ segments, setSegments }: Props) {
   const stopRecording = () => {
     setIsRecording(false)
     if (recognition.current) { recognition.current.stop(); recognition.current = null }
-    if (transcript.trim()) { setSegments([...segments, transcript.trim()]); setTranscript('') }
+    if (transcript.trim()) {
+      const updated = [...segmentsRef.current, transcript.trim()]
+      segmentsRef.current = updated
+      setSegments(updated)
+      setTranscript('')
+    }
   }
 
   const addManualText = () => {
@@ -83,14 +97,14 @@ export default function StepConversation({ segments, setSegments }: Props) {
             ))}
           </div>
         )}
-        <p className="text-xs text-muted mt-3">
+        <p className="text-xs text-muted dark:text-slate-400 mt-3">
           {isRecording ? 'Recording... click to stop' : 'Click to record, or type below'}
         </p>
       </div>
 
       <div
         ref={scrollRef}
-        className="bg-gray-50 rounded-2xl p-6 min-h-[250px] max-h-[400px] overflow-y-auto space-y-2 border border-gray-100"
+        className="bg-gray-50 dark:bg-slate-800 rounded-2xl p-6 min-h-[250px] max-h-[400px] overflow-y-auto space-y-2 border border-gray-100 dark:border-slate-700"
       >
         {segments.length === 0 && !transcript && (
           <p className="text-muted text-sm italic text-center py-8">
@@ -98,13 +112,13 @@ export default function StepConversation({ segments, setSegments }: Props) {
           </p>
         )}
         {segments.map((seg, i) => (
-          <p key={i} className="text-sm text-body leading-relaxed">{seg}</p>
+          <p key={i} className="text-sm text-body dark:text-slate-200 leading-relaxed">{seg}</p>
         ))}
         {transcript && <p className="text-sm text-muted italic">{transcript}</p>}
       </div>
 
       <div className="flex justify-end mt-2">
-        <span className="text-xs text-muted bg-gray-100 px-2 py-1 rounded-full">
+        <span className="text-xs text-muted dark:text-slate-400 bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded-full">
           {wordCount} word{wordCount !== 1 ? 's' : ''}
         </span>
       </div>
@@ -117,7 +131,7 @@ export default function StepConversation({ segments, setSegments }: Props) {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addManualText() }
           }}
           placeholder="Type conversation text here..."
-          className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-sm resize-none focus:border-clinical focus:ring-2 focus:ring-clinical/20 outline-none"
+          className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 text-sm resize-none focus:border-clinical focus:ring-2 focus:ring-clinical/20 outline-none"
           rows={3}
           disabled={isRecording}
         />

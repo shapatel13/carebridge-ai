@@ -17,6 +17,7 @@ Requirements:
 """
 
 import os
+import socket
 import subprocess
 import sys
 import time
@@ -61,6 +62,49 @@ def run_command(command: list[str], cwd: Path, description: str) -> bool:
         return False
 
 
+def kill_port(port: int):
+    """Kill any process using the given port."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        sock.bind(("0.0.0.0", port))
+        sock.close()
+        return  # Port is free, nothing to do
+    except OSError:
+        sock.close()
+
+    print(f"  Port {port} is in use. Attempting to free it...")
+    if sys.platform == "win32":
+        # Find PID using the port on Windows
+        result = subprocess.run(
+            ["netstat", "-ano"], capture_output=True, text=True
+        )
+        for line in result.stdout.splitlines():
+            if f":{port}" in line and "LISTENING" in line:
+                pid = line.strip().split()[-1]
+                try:
+                    subprocess.run(
+                        ["powershell", "-Command", f"Stop-Process -Id {pid} -Force"],
+                        capture_output=True
+                    )
+                    print(f"  Killed process {pid} on port {port}")
+                except Exception:
+                    pass
+    else:
+        # Unix: use lsof + kill
+        try:
+            result = subprocess.run(
+                ["lsof", "-ti", f":{port}"], capture_output=True, text=True
+            )
+            if result.stdout.strip():
+                for pid in result.stdout.strip().split("\n"):
+                    subprocess.run(["kill", "-9", pid.strip()], capture_output=True)
+                    print(f"  Killed process {pid.strip()} on port {port}")
+        except FileNotFoundError:
+            pass
+
+    time.sleep(1)  # Give OS time to release the port
+
+
 def check_nodejs() -> bool:
     """Check if Node.js and npm are installed."""
     try:
@@ -96,6 +140,13 @@ def main():
     print(f"  Node.js version: {result.stdout.strip()}")
     current_step += 1
     
+    # Step 1b: Reset database for fresh schema (demo mode)
+    db_path = backend_dir / "carebridge.db"
+    if db_path.exists():
+        print("  Resetting database for latest schema...")
+        db_path.unlink()
+        print("  Database will be recreated with demo data on startup.")
+
     # Step 2: Install backend dependencies
     print_step(current_step, total_steps, "Installing backend dependencies...")
     if not run_command([sys.executable, "-m", "pip", "install", "-e", "."], backend_dir, "pip install"):
@@ -125,6 +176,7 @@ def main():
     
     # Step 5: Start backend server
     print_step(current_step, total_steps, "Starting FastAPI server...")
+    kill_port(8000)
     print_header("CareBridge AI is Ready!")
     print("  App:  http://localhost:8000")
     print("  API:  http://localhost:8000/docs")

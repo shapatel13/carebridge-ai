@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import api from '../lib/api'
+import AppHeader from '../components/AppHeader'
 import {
   Plus,
-  Stethoscope,
-  LogOut,
   FileText,
   AlertTriangle,
   Clock,
   CheckCircle,
+  ArrowRightLeft,
 } from 'lucide-react'
 
 interface ConversationSummary {
@@ -21,11 +21,12 @@ interface ConversationSummary {
   finalized_at: string | null
   organ_supports: string[] | null
   code_status_discussed: boolean
+  family_present: boolean
 }
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const [conversations, setConversations] = useState<ConversationSummary[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -38,50 +39,34 @@ export default function Dashboard() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Stethoscope className="w-6 h-6 text-navy" />
-            <h1 className="font-bold text-navy text-lg">CareBridge AI</h1>
-            {user?.is_demo && (
-              <span className="text-xs bg-clinical/10 text-clinical px-2 py-0.5 rounded-full font-medium">
-                DEMO
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted hidden sm:block">{user?.full_name}</span>
-            <button
-              onClick={() => {
-                logout()
-                navigate('/login')
-              }}
-              className="text-muted hover:text-navy transition-colors"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors">
+      <AppHeader />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {/* Title + New Button */}
+        {/* Title + Buttons */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-2xl font-bold text-body">Conversations</h2>
-            <p className="text-sm text-muted mt-1">
+            <h2 className="text-2xl font-bold text-body dark:text-slate-100">Conversations</h2>
+            <p className="text-sm text-muted dark:text-slate-400 mt-1">
               Manage your ICU serious illness communications
             </p>
           </div>
-          <button
-            onClick={() => navigate('/new-conversation')}
-            className="px-5 py-2.5 bg-navy hover:bg-navy-dark text-white font-semibold rounded-xl transition-colors flex items-center gap-2 shadow-sm"
-          >
-            <Plus className="w-5 h-5" />
-            New Conversation
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/shift-handoff')}
+              className="px-5 py-2.5 border border-navy text-navy hover:bg-navy/5 dark:border-clinical dark:text-clinical dark:hover:bg-clinical/10 font-medium rounded-xl transition-colors flex items-center gap-2"
+            >
+              <ArrowRightLeft className="w-5 h-5" />
+              Shift Handoff
+            </button>
+            <button
+              onClick={() => navigate('/new-conversation')}
+              className="px-5 py-2.5 bg-navy hover:bg-navy-dark text-white font-semibold rounded-xl transition-colors flex items-center gap-2 shadow-sm"
+            >
+              <Plus className="w-5 h-5" />
+              New Conversation
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -91,13 +76,13 @@ export default function Dashboard() {
         ) : conversations.length === 0 ? (
           /* Empty State */
           <div className="text-center py-16">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-clinical/10 mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-clinical/10 dark:bg-clinical/20 mb-4">
               <FileText className="w-8 h-8 text-clinical" />
             </div>
-            <h3 className="text-lg font-semibold text-body mb-2">
+            <h3 className="text-lg font-semibold text-body dark:text-slate-100 mb-2">
               No conversations yet
             </h3>
-            <p className="text-muted text-sm mb-6 max-w-md mx-auto">
+            <p className="text-muted dark:text-slate-400 text-sm mb-6 max-w-md mx-auto">
               Start your first structured communication to generate physician
               notes, family summaries, and risk flags.
             </p>
@@ -116,17 +101,17 @@ export default function Dashboard() {
               <button
                 key={conv.id}
                 onClick={() => navigate(`/conversations/${conv.id}/review`)}
-                className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all text-left"
+                className="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-slate-700 hover:shadow-md hover:border-gray-200 dark:hover:border-slate-600 transition-all text-left"
               >
                 <div className="flex items-start justify-between mb-3">
-                  <h3 className="font-semibold text-body">
+                  <h3 className="font-semibold text-body dark:text-slate-100">
                     {conv.patient_alias}
                   </h3>
                   <span
                     className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                       conv.status === 'FINALIZED'
-                        ? 'bg-green-50 text-success'
-                        : 'bg-amber-50 text-warning'
+                        ? 'bg-green-50 text-success dark:bg-green-900/30 dark:text-green-400'
+                        : 'bg-amber-50 text-warning dark:bg-amber-900/30 dark:text-amber-400'
                     }`}
                   >
                     {conv.status === 'FINALIZED' ? (
@@ -140,7 +125,7 @@ export default function Dashboard() {
                     )}
                   </span>
                 </div>
-                <div className="text-xs text-muted space-y-1">
+                <div className="text-xs text-muted dark:text-slate-400 space-y-1">
                   <p>
                     Tone: {conv.tone_setting} &middot;{' '}
                     {new Date(conv.created_at).toLocaleDateString()}
