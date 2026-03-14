@@ -1,23 +1,29 @@
-# AI Investment Portfolio Analysis System
+# CareBridge AI
 
-A professional-grade portfolio analytics platform with hedge fund-level technical and fundamental analysis, powered entirely by free data sources (Yahoo Finance).
+An ICU physician-to-family communication platform that transforms serious illness conversations into structured documentation, plain-language family summaries, and medico-legal risk assessments — powered by Claude AI.
 
 ## Features
 
-- **Technical Analysis**: 15+ indicators (SMA/EMA, RSI, MACD, Bollinger Bands, ADX, Ichimoku, etc.)
-- **Fundamental Analysis**: P/E, ROE, Margins, Growth metrics, Dividend data
-- **Risk Analysis**: VaR, CVaR, Sharpe/Sortino ratios, Correlation matrix
-- **AI Insights**: Template-based analysis engine (optional Ollama LLM support)
-- **Dark Terminal Theme**: Professional dark UI with emerald/rose accents
+- **Guided Conversation Wizard**: 4-step workflow (Patient Setup, Transcript Capture, Clinician Notes, Review & Generate)
+- **Voice-to-Text Transcription**: Browser-based speech recognition for real-time conversation capture
+- **AI-Generated Outputs**: Structured physician notes, family-friendly summaries, and medico-legal risk flags
+- **Smart Suggestion Chips**: Pre-fill annotations and family questions with transcript-aware keyword detection
+- **Multi-Language Support**: Family summaries in English, Spanish, Chinese, Vietnamese, Arabic, and Korean
+- **PDF Export**: Hospital-branded PDF generation for physician notes and family summaries
+- **Risk Flag Timeline**: Interactive severity-sorted timeline with copy-to-clipboard follow-up suggestions
+- **Real-Time Readability Score**: Flesch-Kincaid grade-level badge on family summaries
+- **Side-by-Side Tone Comparison**: Compare previous vs. regenerated outputs when adjusting tone
+- **Shift Handoff**: AI-generated handoff summaries covering all patients for incoming physicians
+- **Dark Mode**: Full dark theme support across all pages
 
-## Quick Start - ONE COMMAND
+## Quick Start
 
 ```bash
 # On any platform (Windows, macOS, Linux)
 python start.py
 ```
 
-That's it! This single command will:
+This single command will:
 1. Install frontend dependencies (`npm install`)
 2. Build the React frontend (`npm run build`)
 3. Start the FastAPI server on http://localhost:8000
@@ -52,6 +58,7 @@ npm run dev        # Runs on http://localhost:5173
 
 # Terminal 2 - Backend
 cd backend
+pip install -e .
 python -m uvicorn app.main:app --reload --port 8000
 ```
 
@@ -59,142 +66,85 @@ python -m uvicorn app.main:app --reload --port 8000
 
 - **Python 3.11+** with pip
 - **Node.js 18+** with npm
-- Install backend dependencies:
-  ```bash
-  cd backend
-  pip install -e .
-  # Or manually:
-  pip install fastapi uvicorn sqlalchemy aiosqlite pandas numpy scipy httpx
-  ```
+- **Anthropic API Key** (for Claude AI generation; falls back to demo mode without one)
+
+### Backend Setup
+```bash
+cd backend
+pip install -e .
+```
+
+### Environment Variables
+Create `backend/.env`:
+```bash
+ANTHROPIC_API_KEY=sk-ant-...    # Required for AI generation
+SECRET_KEY=your-secret-key       # JWT authentication secret
+```
 
 ## Architecture
 
 ```
-├── backend/              # FastAPI backend
+carebridge-ai/
+├── backend/                    # FastAPI + SQLAlchemy async backend
 │   ├── app/
-│   │   ├── portfolio/    # Portfolio analysis modules
-│   │   │   ├── analysis/ # TA, fundamentals, risk, AI
-│   │   │   ├── api/      # API routes
-│   │   │   ├── models/   # Database models
-│   │   │   └── services/ # Cache, rate limiter, data fetchers
-│   │   ├── main.py       # FastAPI app with static file serving
-│   │   └── ...
+│   │   ├── auth/               # JWT authentication, user models
+│   │   ├── conversations/      # Core conversation logic
+│   │   │   ├── generator.py    # Claude AI integration + prompts
+│   │   │   ├── models.py       # SQLAlchemy models
+│   │   │   ├── router.py       # API endpoints
+│   │   │   └── schemas.py      # Pydantic schemas
+│   │   ├── core/               # Database, config
+│   │   └── main.py             # FastAPI app + static serving
 │   └── pyproject.toml
-├── frontend/             # React + TypeScript + Tailwind
+├── frontend/                   # React + TypeScript + Tailwind CSS
 │   ├── src/
-│   │   ├── components/   # React components
-│   │   ├── hooks/        # Data fetching hooks (SWR)
-│   │   ├── services/     # API client
-│   │   └── types/        # TypeScript types
+│   │   ├── components/         # UI components
+│   │   │   ├── wizard/         # 4-step conversation wizard
+│   │   │   ├── AppHeader.tsx   # Navigation + dark mode toggle
+│   │   │   ├── RiskTimeline.tsx # Interactive risk flag timeline
+│   │   │   └── WizardProgress.tsx
+│   │   ├── hooks/              # Auth, conversation, theme stores
+│   │   ├── lib/                # PDF generation, readability scoring
+│   │   └── pages/              # Dashboard, wizard, review, handoff
 │   ├── package.json
 │   └── vite.config.ts
-├── start.py              # ONE COMMAND startup script
-├── start.sh              # Unix startup script
-└── start.bat             # Windows startup script
+├── start.py                    # One-command startup script
+├── start.sh                    # Unix startup script
+└── start.bat                   # Windows startup script
 ```
 
 ## How It Works
 
-1. **Frontend Build**: Vite builds React app to `frontend/dist/`
-2. **Static Serving**: FastAPI serves built files from `frontend/dist/`
-3. **API Routes**: All API endpoints at `/api/*` prefix
-4. **SPA Routing**: Catch-all route serves `index.html` for client-side routing
+1. **Physician logs in** and starts a new conversation from the dashboard
+2. **Step 1 - Patient Setup**: Enter patient alias, family presence, language, organ supports, surrogate info
+3. **Step 2 - Transcript**: Record or type the conversation transcript
+4. **Step 3 - Clinician Notes**: Select tone, check code status, add annotations and family questions (with smart auto-detection from transcript)
+5. **Step 4 - Review & Generate**: Review all inputs, then generate AI outputs
+6. **Review Page**: View physician note, family summary (with readability score), risk flags (as interactive timeline), export PDF, compare tone changes
+7. **Shift Handoff**: Generate an AI-powered handoff summary covering all patients for the incoming physician
 
 ## API Endpoints
 
-- `GET /api/portfolio/prices/{symbol}` - Price history
-- `GET /api/portfolio/technical/{symbol}` - Technical analysis
-- `GET /api/portfolio/fundamentals/{symbol}` - Fundamental data
-- `GET /api/portfolio/risk/{portfolio_id}` - Risk analysis
-- `GET /api/portfolio/ai/symbol/{symbol}` - AI insights
-- `GET /api/health` - Health check
+### Authentication
+- `POST /auth/register` - Register new physician
+- `POST /auth/login` - Login and receive JWT token
 
-## Configuration
+### Conversations
+- `POST /conversations` - Create a new conversation
+- `GET /conversations` - List all conversations for the physician
+- `GET /conversations/{id}` - Get conversation with segments and output
+- `PATCH /conversations/{id}` - Update conversation metadata
+- `POST /conversations/{id}/segments` - Add transcript segment
+- `POST /conversations/{id}/generate` - Generate AI outputs
+- `POST /conversations/{id}/finalize` - Lock conversation
+- `POST /conversations/handoff` - Generate shift handoff summary
 
-### Environment Variables
+## Tech Stack
 
-Create `.env` in project root:
-```bash
-# Optional: Custom API URL for frontend dev
-VITE_API_URL=http://localhost:8000/api
-
-# Optional: Disable AI features
-VITE_ENABLE_AI=true
-```
-
-### Cache & Rate Limiting
-
-Edit `backend/app/portfolio/services/cache_manager.py`:
-```python
-CacheConfig(
-    ttl_prices=3600,        # 1 hour
-    ttl_fundamentals=86400, # 24 hours
-    max_entries=10000,
-)
-```
-
-Edit `backend/app/portfolio/services/rate_limiter.py`:
-```python
-RateLimitConfig(
-    calls_per_second=2.0,  # Respectful rate limiting
-    retry_attempts=3,
-)
-```
-
-## Data Sources
-
-- **Yahoo Finance**: Free, no API key required (15-min delayed)
-- **SQLite Cache**: Local caching with TTL
-- **No external API costs**: Everything runs locally
-
-## Development
-
-### Frontend Development
-```bash
-cd frontend
-npm run dev    # Hot reload on http://localhost:5173
-```
-
-### Backend Development
-```bash
-cd backend
-python -m uvicorn app.main:app --reload --port 8000
-```
-
-### Running Tests
-```bash
-cd backend
-pytest tests/ -v
-```
-
-## Troubleshooting
-
-### Port already in use
-```bash
-# Find and kill process on port 8000
-# Windows:
-netstat -ano | findstr :8000
-taskkill /PID <PID> /F
-
-# macOS/Linux:
-lsof -ti:8000 | xargs kill -9
-```
-
-### Frontend build fails
-```bash
-cd frontend
-rm -rf node_modules package-lock.json
-npm install
-npm run build
-```
-
-### Backend dependencies missing
-```bash
-cd backend
-pip install -e .
-# Or:
-pip install fastapi uvicorn sqlalchemy aiosqlite pandas numpy scipy httpx python-jose passlib
-```
+- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, Zustand, jsPDF, Lucide Icons
+- **Backend**: FastAPI, SQLAlchemy (async), SQLite (aiosqlite), Pydantic v2
+- **AI**: Anthropic Claude (claude-haiku-4-5) via official SDK
+- **Auth**: JWT tokens with bcrypt password hashing
 
 ## License
 
