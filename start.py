@@ -17,11 +17,26 @@ Requirements:
 """
 
 import os
+import shutil
 import socket
 import subprocess
 import sys
 import time
 from pathlib import Path
+
+
+def resolve_cmd(command: list[str]) -> list[str]:
+    """On Windows, resolve npm/node/npx to their .cmd/.exe paths.
+
+    subprocess.run(["npm", ...]) without shell=True only matches .exe files —
+    npm is npm.cmd on Windows, so we resolve it via shutil.which() (which
+    honors PATHEXT).
+    """
+    if sys.platform == "win32" and command and command[0] in ("npm", "node", "npx"):
+        resolved = shutil.which(command[0])
+        if resolved:
+            return [resolved] + command[1:]
+    return command
 
 
 def print_header(text: str):
@@ -41,7 +56,7 @@ def run_command(command: list[str], cwd: Path, description: str) -> bool:
     print(f"  Running: {' '.join(command)}")
     try:
         result = subprocess.run(
-            command,
+            resolve_cmd(command),
             cwd=cwd,
             check=True,
             capture_output=True,
@@ -108,8 +123,8 @@ def kill_port(port: int):
 def check_nodejs() -> bool:
     """Check if Node.js and npm are installed."""
     try:
-        subprocess.run(["node", "--version"], check=True, capture_output=True)
-        subprocess.run(["npm", "--version"], check=True, capture_output=True)
+        subprocess.run(resolve_cmd(["node", "--version"]), check=True, capture_output=True)
+        subprocess.run(resolve_cmd(["npm", "--version"]), check=True, capture_output=True)
         return True
     except (subprocess.CalledProcessError, FileNotFoundError):
         return False
@@ -136,7 +151,7 @@ def main():
         sys.exit(1)
     
     # Check node version
-    result = subprocess.run(["node", "--version"], capture_output=True, text=True)
+    result = subprocess.run(resolve_cmd(["node", "--version"]), capture_output=True, text=True)
     print(f"  Node.js version: {result.stdout.strip()}")
     current_step += 1
     
