@@ -75,6 +75,28 @@ export default function StepConversation({ segments, setSegments }: Props) {
 
   const wordCount = [...segments, transcript].join(' ').split(/\s+/).filter(Boolean).length
 
+  const qualityTier = wordCount < 100 ? 'sparse' : wordCount < 400 ? 'building' : 'good'
+  const qualityConfig = {
+    sparse: {
+      dot: 'bg-danger',
+      pill: 'bg-red-50 text-danger border-red-200 dark:bg-red-950/40 dark:border-red-900 dark:text-red-300',
+      label: 'Sparse',
+      hint: 'Likely to trigger documentation-gap warnings',
+    },
+    building: {
+      dot: 'bg-warning',
+      pill: 'bg-amber-50 text-warning border-amber-200 dark:bg-amber-950/40 dark:border-amber-900 dark:text-amber-300',
+      label: 'Building',
+      hint: 'Add prognosis, code status, decisions, family questions',
+    },
+    good: {
+      dot: 'bg-success',
+      pill: 'bg-green-50 text-success border-green-200 dark:bg-green-950/40 dark:border-green-900 dark:text-green-300',
+      label: 'Good depth',
+      hint: 'Documentation depth looks solid',
+    },
+  }[qualityTier]
+
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex flex-col items-center mb-6">
@@ -117,9 +139,14 @@ export default function StepConversation({ segments, setSegments }: Props) {
         {transcript && <p className="text-sm text-muted italic">{transcript}</p>}
       </div>
 
-      <div className="flex justify-end mt-2">
-        <span className="text-xs text-muted dark:text-slate-400 bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded-full">
-          {wordCount} word{wordCount !== 1 ? 's' : ''}
+      <div className="flex items-center justify-between mt-2 gap-3">
+        <p className="text-xs text-muted dark:text-slate-400 italic">{qualityConfig.hint}</p>
+        <span
+          className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${qualityConfig.pill}`}
+          title={`Transcript quality: ${qualityConfig.label}`}
+        >
+          <span className={`w-2 h-2 rounded-full ${qualityConfig.dot}`} />
+          {wordCount} word{wordCount !== 1 ? 's' : ''} &middot; {qualityConfig.label}
         </span>
       </div>
 
