@@ -199,9 +199,24 @@ Generate the structured physician note, family summary, and risk flags based on 
         message = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=4096,
-            system=SYSTEM_PROMPT,
+            temperature=0.2,
+            system=[
+                {
+                    "type": "text",
+                    "text": SYSTEM_PROMPT,
+                    "cache_control": {"type": "ephemeral"},
+                }
+            ],
             messages=[{"role": "user", "content": user_message}],
         )
+
+        if hasattr(message, "usage"):
+            logger.info(
+                f"Usage — input: {message.usage.input_tokens}, "
+                f"cache_read: {getattr(message.usage, 'cache_read_input_tokens', 0)}, "
+                f"cache_write: {getattr(message.usage, 'cache_creation_input_tokens', 0)}, "
+                f"output: {message.usage.output_tokens}"
+            )
 
         response_text = message.content[0].text
 
@@ -313,7 +328,14 @@ Generate a comprehensive shift handoff document. Respond with valid JSON only.""
         message = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=2048,
-            system=HANDOFF_SYSTEM_PROMPT,
+            temperature=0.2,
+            system=[
+                {
+                    "type": "text",
+                    "text": HANDOFF_SYSTEM_PROMPT,
+                    "cache_control": {"type": "ephemeral"},
+                }
+            ],
             messages=[{"role": "user", "content": user_message}],
         )
 
