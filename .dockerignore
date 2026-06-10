@@ -1,0 +1,17 @@
+# Don't ship dev cruft into the image
+**/.git
+**/.gitignore
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/.venv
+**/venv
+**/.env
+**/*.db
+**/*.sqlite
+**/dist
+**/build
+.claude/
+docs/
+*.md
+.DS_Store

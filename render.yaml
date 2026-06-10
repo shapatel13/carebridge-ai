@@ -1,0 +1,31 @@
+# Render.com Blueprint for CareBridge AI
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Usage:
+#   1. Push this file to GitHub (already on master)
+#   2. In Render, click "New" → "Blueprint"
+#   3. Connect this repo; Render reads this file and provisions the service
+#   4. Set ANTHROPIC_API_KEY in the dashboard under "Environment" before first deploy
+#
+# Free tier notes:
+#   - Sleeps after 15 min of inactivity; ~30s cold-start on the next request
+#   - 512 MB RAM, shared CPU — plenty for this demo workload
+#   - No persistent disk; the SQLite demo DB is recreated and reseeded on every
+#     boot, which is actually fine for demo use (always fresh demo data)
+
+services:
+  - type: web
+    name: carebridge-ai
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeploy: true     # redeploy on push to the branch below
+    branch: master
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false      # must be set manually in the Render dashboard
+      - key: SECRET_KEY
+        generateValue: true   # Render auto-generates a strong random value
+      - key: ENVIRONMENT
+        value: production
